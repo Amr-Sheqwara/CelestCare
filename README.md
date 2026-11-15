@@ -17,6 +17,7 @@ The system pairs an interactive single-page mission operations console with an A
 - [System Architecture](#system-architecture)
 - [Frontend Architecture (Crew Health Console.html)](#frontend-architecture-crew-health-consolehtml)
   - [Module Breakdown](#module-breakdown)
+  - [NASA-STD-3001 Periodic Human Performance Subsystem](#nasa-std-3001-periodic-human-performance-subsystem)
   - [Interactive Anatomical Map](#interactive-anatomical-map)
   - [Circadian Lighting & Sleep Engine](#circadian-lighting--sleep-engine)
   - [Cognitive Assessment Suite](#cognitive-assessment-suite)
@@ -107,6 +108,15 @@ The user interface is delivered as a zero-dependency, self-contained single-page
 | `askAI()` | Assembles diagnostic payload: clinical narrative, base64 photograph, astronaut profile, and vital telemetry; dispatches to backend service and renders diagnostic assessments. |
 | `chart()` / `renderCharts()` | Draws multi-point SVG trend charts across a rolling 12-day mission window against established NASA-STD-3001 physiological safety limits. |
 | `notify(msg, lvl)` / `status()` | Multi-tier alert dispatcher sending timestamped notifications to Flight Surgeon, Crew Medical Officer (CMO), Commander, and Flight Director. |
+
+### NASA-STD-3001 Periodic Human Performance Subsystem
+
+Directly integrated into the measurements interface, this subsystem enables crewmembers to record in-flight fitness-for-duty metrics derived from cycle ergometers, resistive load cells, and biochemical assays, cross-referencing them against active mission environment standards:
+
+- **Aerobic Capacity ($VO_{2\max}$)** (`vo2Input`): Evaluated against microgravity EVA baseline ($\ge 32.9\text{ ml/min/kg}$, `[V1 4001]`) or planetary surface locomotion baseline ($\ge 36.5\text{ ml/min/kg}$, `[V1 4002]`). Sub-nominal values trigger heart triage pulse and countermeasure recommendations.
+- **ARED Muscular Strength Retention** (`strengthInput`): Monitored against the 80% baseline limit (`[V1 4024]`); flags musculoskeletal deconditioning and alerts the crew to increase resistive loading.
+- **Bone Mineral Density (BMD) Retention** (`bmdInput`): Monitored against the 95% hip/spine retention limit (`[V1 4027]`).
+- **Urinary Calcium Demineralization Index** (`calciumInput`): Detects acute hypercalciuria ($> 300\text{ mg/24h}$ stone risk, $> 400\text{ mg/24h}$ severe risk), immediately dispatching critical emergency alerts to the Flight Surgeon / CMO and pulsing the abdominal zone red.
 
 ### Interactive Anatomical Map
 
@@ -264,6 +274,7 @@ CelestCare/
 ├── medgemma_server.py          # Asynchronous FastAPI medical server with MedGemma integration
 ├── README.md                   # System documentation, architectural specifications, and runbook
 ├── requirements.txt            # Pinned Python package dependencies
+├── TEAM_EXPLANATION_AR.md      # Arabic team briefing & NASA-STD-3001 operational handbook
 └── Images/                     # Visual assets and anatomical diagrams
     ├── human_figure.png        # Anatomical vector mapping overlay
     └── nasa_logo.png           # Official NASA insignia emblem
@@ -296,8 +307,8 @@ The following matrix documents direct compliance with the technical requirements
 
 | Standard Code | Standard Title | NASA Threshold & Permissible Limit | CelestCare Technical Implementation |
 | :--- | :--- | :--- | :--- |
-| **[V1 4001]** | Microgravity EVA Aerobic Capacity | In-mission $VO_{2\max} \ge 32.9 \text{ ml/min/kg}$ for microgravity EVAs. | Operational targets embedded in `VIT.iss` and `VIT.transit`; integrated with aerobic exercise countermeasure tracking. |
-| **[V1 4002]** | Extraterrestrial Surface EVA Aerobic Capacity | In-mission $VO_{2\max} \ge 36.5 \text{ ml/min/kg}$ for lunar/Martian surface EVAs. | Mission environment adaptive logic (`VIT.moon`, `VIT.mars`) elevating aerobic thresholds for surface locomotion in pressurized suits. |
+| **[V1 4001]** | Microgravity EVA Aerobic Capacity | In-mission $VO_{2\max} \ge 32.9 \text{ ml/min/kg}$ for microgravity EVAs. | Interactive logging (`vo2Input`) and automated evaluation; triggers cardiovascular warning and CEVIS countermeasure guidance if sub-nominal. |
+| **[V1 4002]** | Extraterrestrial Surface EVA Aerobic Capacity | In-mission $VO_{2\max} \ge 36.5 \text{ ml/min/kg}$ for lunar/Martian surface EVAs. | Dynamic surface EVA threshold validation; elevates aerobic cutoff to $36.5\text{ ml/min/kg}$ on Moon or Mars surface environments. |
 | **[V1 4003]** | In-Mission Aerobic Retention | Maintain aerobic capacity at or above **80% of pre-mission baseline**. | 12-day longitudinal SVG trend charts (`renderCharts()`) alerting if estimated cardiovascular work output drops below 80%. |
 | **[V1 4007]** | In-Mission Sensorimotor Metrics | Task-specific functional assessment of motor control, eye-hand coordination, and gaze. | **Asteroid Psychomotor Vigilance Test** (`initGame()`, `gameLoop()`) measuring reaction latency and motor interception precision. |
 | **[V1 4011]** | Behavioral Health & Cognitive Status | Maintain behavioral and cognitive status within clinically accepted ranges. | **Neural Matrix Working Memory Test** (`buildGrid()`, `cardClick()`) and daily subjective mood/stress scoring. |
@@ -305,8 +316,8 @@ The following matrix documents direct compliance with the technical requirements
 | **[V1 4016]** | Hematology & Immunology Countermeasures | In-mission countermeasures to sustain immune parameters outside critical morbidity levels. | Automated triage for dermatological lesions and latent viral reactivation (EBV / VZV) in `medgemma_server.py`. |
 | **[V1 4020]** | In-Mission Nutrient Intake | Provide 100% of calculated nutrient and caloric energy requirements. | Daily nutritional monitoring module checking caloric frequency and hydration intake (> 2.5 L/day). |
 | **[V1 4023]** | Pre-Mission Muscle Strength | Meet baseline strength: Deadlift $\ge 1.0 - 1.6\times$ BW; Bench Press $\ge 0.7 - 1.0\times$ BW. | Astronaut personalized profile setup (`enter()`) incorporating physical baseline capabilities into monitoring models. |
-| **[V1 4024]** | In-Mission Skeletal Muscle Strength | Maintain skeletal muscle strength at or above **80% of baseline**. | Mandatory 2-hour daily exercise countermeasure protocol scheduling (ARED resistive device tracking). |
-| **[V1 4027]** | Microgravity Bone Mineral Density (BMD) Loss | Maintain hip and spine BMD $\ge 95\%$ of pre-mission values; femoral neck $\ge 90\%$. | Clinical diagnostic detection for hypercalciuria-induced renal stone symptoms and axial skeletal unloading back pain. |
+| **[V1 4024]** | In-Mission Skeletal Muscle Strength | Maintain skeletal muscle strength at or above **80% of baseline**. | Interactive logging (`strengthInput`) from ARED telemetry; triggers musculoskeletal alerts and pulses leg/spine zones if $< 80\%$. |
+| **[V1 4027]** | Microgravity Bone Mineral Density (BMD) Loss | Maintain hip and spine BMD $\ge 95\%$ of pre-mission values; femoral neck $\ge 90\%$. | Interactive logging (`bmdInput`, `calciumInput`); automated triage for hypercalciuria-induced renal stone formation and emergency surgeon alert. |
 | **[V1 4030]** | Career Space Permissible Exposure Limit (SPEL) | Total career effective radiation dose $< 600 \text{ mSv}$ universal across all ages/sexes. | Dosimetry logging module integrating ionizing radiation telemetry against the 3% cancer mortality risk ceiling. |
 | **[V1 4031]** | Solar Particle Event (SPE) Limit | Protect crew from design reference SPE to $< 250 \text{ mSv}$ effective dose. | Real-time cabin radiation spike alerts and automated emergency storm-shelter notifications. |
 | **[V1 4033]** | Galactic Cosmic Radiation (GCR) Limits | Habitable volume protection: $< 1.3 \text{ mSv/day}$ (free space), $< 0.9 \text{ mSv/day}$ (surface). | Continuous ECLSS radiation gauge (`renderEnv()`) displaying environment-specific GCR permissible ceilings. |
