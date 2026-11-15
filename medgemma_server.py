@@ -156,17 +156,49 @@ def rule_based_space_medical_triage(
             "Isolate contact with space suit liner. Check oral temperature and compare lesion margins across consecutive days."
         )
 
-    # Telemetry checks
+    # Domain 5 & 7: Musculoskeletal, Bone Demineralization & Renal Stone Risk (NASA-STD-3001 [V1 4027])
+    if any(k in lower_text for k in ["bone", "calcium", "kidney", "stone", "flank", "groin", "back pain", "spine"]):
+        findings.append(
+            "Suspected hypercalciuria-induced nephrolithiasis (renal stone) or accelerated bone mineral density deconditioning per NASA-STD-3001 [V1 4027]."
+        )
+        actions.append(
+            "Initiate aggressive hydration (>2.5 L/day), perform point-of-care ultrasound if available, and verify completion of ARED resistive loading countermeasure."
+        )
+        if any(k in lower_text for k in ["flank", "stone", "groin", "severe"]):
+            urgency = "Priority Clinical Evaluation"
+
+    # Telemetry checks calibrated to NASA-STD-3001 Vol 1 & Vol 2 standards
     telemetry_notes = []
-    if spo2 < 95:
-        telemetry_notes.append(f"Low SpO2 ({spo2}%), rule out cabin hypoxia or suit scrub malfunction.")
-        urgency = "Priority Clinical Evaluation"
-    if hr > 100 or hr < 50:
-        telemetry_notes.append(f"Heart rate ({hr} bpm) outside standard resting bounds.")
-    if sys_bp > 140 or sys_bp < 90:
-        telemetry_notes.append(f"Blood pressure ({sys_bp}/{dia_bp} mmHg) indicates circulatory instability.")
-    if temp > 37.8:
-        telemetry_notes.append(f"Elevated body temperature ({temp}°C) suggests active systemic inflammatory response.")
+    if spo2 < 92:
+        telemetry_notes.append(f"Critical SpO2 hypoxia ({spo2}%). Immediate cabin scrub / ECLSS / suit pressure evaluation required.")
+        urgency = "CRITICAL / EMERGENCY"
+    elif spo2 < 96:
+        telemetry_notes.append(f"Sub-nominal SpO2 ({spo2}%). Monitor for ambient hypoxia or hypercapnia.")
+        if urgency != "CRITICAL / EMERGENCY":
+            urgency = "Priority Clinical Evaluation"
+
+    if hr > 110:
+        telemetry_notes.append(f"Tachycardia ({hr} bpm) exceeding resting flight envelope.")
+    elif hr < 45:
+        telemetry_notes.append(f"Bradycardia ({hr} bpm) below nominal resting flight limits.")
+
+    if sys_bp > 135:
+        telemetry_notes.append(f"Elevated systolic blood pressure ({sys_bp}/{dia_bp} mmHg).")
+    elif sys_bp < 85:
+        telemetry_notes.append(f"Hypotension ({sys_bp}/{dia_bp} mmHg) suggesting orthostatic or fluid shift deconditioning.")
+
+    if temp > 38.0:
+        telemetry_notes.append(f"Fever ({temp}°C) indicating active systemic infection or acute inflammatory response.")
+        if urgency != "CRITICAL / EMERGENCY":
+            urgency = "Priority Clinical Evaluation"
+    elif temp < 35.8:
+        telemetry_notes.append(f"Hypothermia ({temp}°C) requiring thermal countermeasure.")
+
+    if glu < 55:
+        telemetry_notes.append(f"Acute hypoglycemia ({glu} mg/dL). Immediate caloric / glucose administration indicated.")
+        urgency = "CRITICAL / EMERGENCY"
+    elif glu > 140:
+        telemetry_notes.append(f"Elevated postprandial blood glucose ({glu} mg/dL).")
 
     if not findings:
         findings.append("Symptom presentation logged for ongoing observation.")

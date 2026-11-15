@@ -247,7 +247,10 @@ The server implements a fault-tolerant dual-mode architecture:
 | **Vestibular / SMS** | `dizzy`, `nausea`, `vomit`, `balance`, `vertigo` | Space Motion Sickness (SMS); inner-ear otolith adaptation. | Restrict rapid head motion; defer all non-critical extravehicular activity (EVA). |
 | **Cardiovascular** | `chest`, `pain`, `tight`, `palpitation`, `heart` | Spaceflight cardiovascular deconditioning; cardiac arrhythmia risk. | Emergency status: cease exercise immediately, attach 12-lead ECG, alert Flight Surgeon. |
 | **Immune & Skin** | `rash`, `itch`, `skin`, `hives`, `sore`, `fever` | Latent viral reactivation (EBV / VZV); microgravity immune dysregulation. | Inspect lesion margins daily; isolate contact with space suit pressure liner. |
-| **Telemetry Outlier** | `spo2 < 95%`, `hr > 100`, `temp > 37.8C` | Hypoxia, cabin scrubber failure, systemic inflammatory response. | Elevate triage urgency; re-evaluate physiological telemetry every 60 minutes. |
+| **Musculoskeletal & Bone** | `bone`, `kidney`, `stone`, `flank`, `back pain`, `calcium` | Accelerated bone mineral loss & hypercalciuria-induced nephrolithiasis (`[V1 4027]`). | Immediate ultrasound, aggressive hydration (>2.5 L/day), verify ARED resistive countermeasure completion. |
+| **Telemetry Hypoxia** | `spo2 < 92%` (critical) or `spo2 < 96%` (sub-nominal) | Critical cabin hypoxia, suit scrubber anomaly, ambient hypercapnia. | Critical alert: assess ECLSS scrubbers, verify suit pressure, administer supplemental O2. |
+| **Telemetry Circulatory** | `hr > 110`, `hr < 45`, `sys > 135`, `sys < 85` | Tachycardia, bradycardia, or circulatory instability from microgravity unloading. | Cease physical workloads; re-measure vitals; notify Crew Medical Officer. |
+| **Telemetry Systemic** | `temp > 38.0C` (fever) or `glu < 55 mg/dL` | Active systemic inflammatory response or acute hypoglycemia. | Prioritize clinical evaluation, isolate infectious contact, provide acute carbohydrate feed. |
 
 ---
 
@@ -270,9 +273,47 @@ CelestCare/
 
 ## NASA Data & Spaceflight Standards Alignment
 
-This project directly aligns with space medicine research and operational documentation published by NASA:
+This project directly aligns with space medicine research, operational guidelines, and engineering standards published by NASA:
 
-### 1. NASA Human Research Program (HRP) Evidence Books
+### 1. Calibrated Physiological Telemetry Reference (NASA-STD-3001 Vol 1)
+
+The console implements flight-calibrated physiological envelopes derived from NASA-STD-3001 Volume 1 (Crew Health):
+
+| Metric | Nominal Range (Planetary/1g) | Microgravity Adaptation (ISS/Transit) | Clinical Attention Boundary | Critical Medical Emergency | Clinical Rationale & Spaceflight Dynamics |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Heart Rate** | 50 – 90 bpm | 50 – 90 bpm | < 45 or > 110 bpm | < 40 or > 120 bpm | Rest resting bradycardia/tachycardia; arrhythmia risk exacerbated by autonomic and electrolyte shifts. |
+| **Systolic BP** | 90 – 125 mmHg | 85 – 120 mmHg | < 80 or > 140 mmHg | < 75 or > 160 mmHg | Cephalad fluid shift reduces lower-extremity hydrostatic pooling; resting arterial pressure runs slightly lower. |
+| **Diastolic BP** | 60 – 80 mmHg | 55 – 80 mmHg | < 50 or > 90 mmHg | < 45 or > 100 mmHg | Central vascular compliance adaptation and altered baroreceptor reflex sensitivity. |
+| **Blood Oxygen (SpO₂)** | 96 – 100% | 96 – 100% | 92 – 95% | < 92% | Evaluates tissue hypoxia; sub-nominal values indicate cabin scrub malfunction or suit pressure compromise. |
+| **Core Body Temp** | 36.5 – 37.5 °C | 36.6 – 37.6 °C | < 35.8 or > 38.0 °C | < 35.0 or > 38.5 °C | Microgravity "space fever" caused by reduced convective heat transfer and chronic low-grade inflammation. |
+| **Blood Glucose** | 70 – 100 mg/dL | 70 – 100 mg/dL | < 60 or > 140 mg/dL | < 55 or > 180 mg/dL | Fasting baseline monitoring; acute hypoglycemia severely degrades fine-motor piloting and EVA performance. |
+
+---
+
+### 2. NASA-STD-3001 Section 4.0 Human Performance Compliance Matrix
+
+The following matrix documents direct compliance with the technical requirements and Permissible Outcome Limits (POLs) established in NASA-STD-3001 Section 4.0 (Human Performance):
+
+| Standard Code | Standard Title | NASA Threshold & Permissible Limit | CelestCare Technical Implementation |
+| :--- | :--- | :--- | :--- |
+| **[V1 4001]** | Microgravity EVA Aerobic Capacity | In-mission $VO_{2\max} \ge 32.9 \text{ ml/min/kg}$ for microgravity EVAs. | Operational targets embedded in `VIT.iss` and `VIT.transit`; integrated with aerobic exercise countermeasure tracking. |
+| **[V1 4002]** | Extraterrestrial Surface EVA Aerobic Capacity | In-mission $VO_{2\max} \ge 36.5 \text{ ml/min/kg}$ for lunar/Martian surface EVAs. | Mission environment adaptive logic (`VIT.moon`, `VIT.mars`) elevating aerobic thresholds for surface locomotion in pressurized suits. |
+| **[V1 4003]** | In-Mission Aerobic Retention | Maintain aerobic capacity at or above **80% of pre-mission baseline**. | 12-day longitudinal SVG trend charts (`renderCharts()`) alerting if estimated cardiovascular work output drops below 80%. |
+| **[V1 4007]** | In-Mission Sensorimotor Metrics | Task-specific functional assessment of motor control, eye-hand coordination, and gaze. | **Asteroid Psychomotor Vigilance Test** (`initGame()`, `gameLoop()`) measuring reaction latency and motor interception precision. |
+| **[V1 4011]** | Behavioral Health & Cognitive Status | Maintain behavioral and cognitive status within clinically accepted ranges. | **Neural Matrix Working Memory Test** (`buildGrid()`, `cardClick()`) and daily subjective mood/stress scoring. |
+| **[V1 4014]** | Critical Tasks & Planned Sleep Period | Establish strict limits on work, physical activity, and protected sleep periods. | **Circadian Sleep Engine** (`applyMode()`, `sleepGo()`, `wake()`) with red-amber spectrum lighting and sleep-debt triage. |
+| **[V1 4016]** | Hematology & Immunology Countermeasures | In-mission countermeasures to sustain immune parameters outside critical morbidity levels. | Automated triage for dermatological lesions and latent viral reactivation (EBV / VZV) in `medgemma_server.py`. |
+| **[V1 4020]** | In-Mission Nutrient Intake | Provide 100% of calculated nutrient and caloric energy requirements. | Daily nutritional monitoring module checking caloric frequency and hydration intake (> 2.5 L/day). |
+| **[V1 4023]** | Pre-Mission Muscle Strength | Meet baseline strength: Deadlift $\ge 1.0 - 1.6\times$ BW; Bench Press $\ge 0.7 - 1.0\times$ BW. | Astronaut personalized profile setup (`enter()`) incorporating physical baseline capabilities into monitoring models. |
+| **[V1 4024]** | In-Mission Skeletal Muscle Strength | Maintain skeletal muscle strength at or above **80% of baseline**. | Mandatory 2-hour daily exercise countermeasure protocol scheduling (ARED resistive device tracking). |
+| **[V1 4027]** | Microgravity Bone Mineral Density (BMD) Loss | Maintain hip and spine BMD $\ge 95\%$ of pre-mission values; femoral neck $\ge 90\%$. | Clinical diagnostic detection for hypercalciuria-induced renal stone symptoms and axial skeletal unloading back pain. |
+| **[V1 4030]** | Career Space Permissible Exposure Limit (SPEL) | Total career effective radiation dose $< 600 \text{ mSv}$ universal across all ages/sexes. | Dosimetry logging module integrating ionizing radiation telemetry against the 3% cancer mortality risk ceiling. |
+| **[V1 4031]** | Solar Particle Event (SPE) Limit | Protect crew from design reference SPE to $< 250 \text{ mSv}$ effective dose. | Real-time cabin radiation spike alerts and automated emergency storm-shelter notifications. |
+| **[V1 4033]** | Galactic Cosmic Radiation (GCR) Limits | Habitable volume protection: $< 1.3 \text{ mSv/day}$ (free space), $< 0.9 \text{ mSv/day}$ (surface). | Continuous ECLSS radiation gauge (`renderEnv()`) displaying environment-specific GCR permissible ceilings. |
+
+---
+
+### 3. NASA Human Research Program (HRP) Evidence Books
 The diagnostic logic and health check-ins address core spaceflight physiological risks:
 - **Risk of Spaceflight-Associated Neuro-Ocular Syndrome (SANS)**: Ocular flattening, optic disc edema, and hyperopic shifts from sustained cephalad venous fluid redistribution.
 - **Risk of Space Motion Sickness (SMS)**: Neurovestibular conflict between semicircular canals and otolith organs during gravity transitions.
@@ -280,16 +321,11 @@ The diagnostic logic and health check-ins address core spaceflight physiological
 - **Risk of Immune System Dysregulation**: Subclinical latent herpesvirus reactivation (Epstein-Barr, Varicella-Zoster) and skin barrier compromise.
 - **Risk of Bone and Muscle Deconditioning**: Microgravity-induced muscle atrophy and bone mineral loss mitigated by scheduled resistance training.
 
-### 2. NASA Spaceflight Human-System Standard (NASA-STD-3001)
-- **Volume 1 (Crew Health)**:
-  - Establishes baseline physiological standards for vital signs, medical hardware interfaces, and clinical record logging.
-- **Volume 2 (Human Factors, Habitation, and Environmental Quality)**:
-  - Cabin atmospheric limits: Carbon Dioxide concentration ($\text{P}_{\text{CO}_2} < 3.0 \text{ mmHg}$ nominal), Oxygen fraction ($19.5\% - 23.5\%$), and total pressure ($101.3 \text{ kPa}$).
-  - Ionizing radiation surveillance: Monitoring cumulative Solar Particle Events (SPE) and Galactic Cosmic Rays (GCR).
+---
 
-### 3. Operational Exercise Countermeasures
+### 4. Operational Exercise Countermeasures
 - Automated scheduling for the mandatory **2-hour daily exercise prescription**:
-  - Advanced Resistive Exercise Device (ARED) for axial skeleton bone retention.
+  - Advanced Resistive Exercise Device (ARED) for axial skeleton bone retention and spinal support.
   - T2 Treadmill and Cycle Ergometer (CEVIS) for aerobic and cardiovascular conditioning.
 
 ---

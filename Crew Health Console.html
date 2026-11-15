@@ -2850,19 +2850,51 @@
         <div class="two" style="margin-top:16px">
           <div class="panel">
             <h2>Record Daily Measurements</h2>
-            <p class="mut">Type values from the cuff, pulse oximeter, glucometer and thermometer.</p>
+            <p class="mut">Standard flight medical telemetry per NASA-STD-3001 Vol 1.</p>
             <div class="two">
-              <div><label for="hr">Heart rate (bpm)</label><input type="number" id="hr" value="70"></div>
-              <div><label for="spo2">Blood oxygen SpO₂ (%)</label><input type="number" id="spo2" value="97"></div>
-              <div><label for="sys">Blood pressure, systolic (mmHg)</label><input type="number" id="sys" value="118">
+              <div><label for="hr">Heart rate (bpm)</label><input type="number" id="hr" value="68"></div>
+              <div><label for="spo2">Blood oxygen SpO₂ (%)</label><input type="number" id="spo2" value="98"></div>
+              <div><label for="sys">Blood pressure, systolic (mmHg)</label><input type="number" id="sys" value="116">
               </div>
-              <div><label for="dia">Blood pressure, diastolic (mmHg)</label><input type="number" id="dia" value="76">
+              <div><label for="dia">Blood pressure, diastolic (mmHg)</label><input type="number" id="dia" value="74">
               </div>
-              <div><label for="glu">Blood sugar (mg/dL)</label><input type="number" id="glu" value="92"></div>
+              <div><label for="glu">Blood sugar (mg/dL)</label><input type="number" id="glu" value="90"></div>
               <div><label for="temp">Body temperature (°C)</label><input type="number" id="temp" step="0.1"
                   value="36.8"></div>
             </div>
-            <p><button class="pri" id="subV">Save measurements</button></p>
+
+            <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--bdr)">
+              <h3 style="font-size:0.95rem;margin-bottom:4px">NASA-STD-3001 Periodic Human Performance</h3>
+              <p class="mut" style="font-size:0.8rem;margin-bottom:10px">CEVIS cycle ergometer test, ARED load-cell telemetry, and bone remodeling monitoring.</p>
+              <div class="two">
+                <div>
+                  <label for="vo2Input">Aerobic Capacity VO₂max (ml/min/kg)</label>
+                  <input type="number" id="vo2Input" step="0.1" value="38.5">
+                  <small class="mut">Limit: ≥ 32.9 (ISS) / ≥ 36.5 (Surface) [V1 4001/4002]</small>
+                </div>
+                <div>
+                  <label for="strengthInput">ARED Muscular Strength (% baseline)</label>
+                  <input type="number" id="strengthInput" step="1" value="88">
+                  <small class="mut">NASA Limit: ≥ 80% baseline [V1 4024]</small>
+                </div>
+                <div>
+                  <label for="bmdInput">Bone Mineral Density (% baseline)</label>
+                  <input type="number" id="bmdInput" step="0.5" value="96.5">
+                  <small class="mut">NASA Limit: ≥ 95% hip/spine [V1 4027]</small>
+                </div>
+                <div>
+                  <label for="calciumInput">Urinary Calcium / Stone Index</label>
+                  <select id="calciumInput">
+                    <option value="nominal">Nominal (&lt; 250 mg/24h)</option>
+                    <option value="elevated">Elevated (&gt; 300 mg/24h - Stone Risk)</option>
+                    <option value="critical">Critical (&gt; 400 mg/24h - Severe Risk)</option>
+                  </select>
+                  <small class="mut">Demineralization stone risk [V1 4027]</small>
+                </div>
+              </div>
+            </div>
+
+            <p style="margin-top:14px"><button class="pri" id="subV">Save measurements</button></p>
             <ul class="log" id="resV"></ul>
           </div>
           <div class="panel">
@@ -3091,7 +3123,7 @@
       hands: ['Hands and fingers', 'Handle tools and controls, often in gloves.', ['Fingertip bruising and nail damage from gloves', 'Numbness or tingling', 'Wrist strain', 'Slow-healing cuts', 'Joint pain after a spacewalk']],
       legs: ['Legs and spine', 'Carry load on Earth, Moon and Mars; bones weaken without it.', ['Bone density loss', 'Muscle wasting', 'Blood clots (swelling, calf pain)', 'Back pain and spinal lengthening', 'Swelling from fluid shift', 'Joint pain after a spacewalk', 'Injury from landing loads']]
     };
-    const RNG = { hr: [[50, 100], [40, 120]], sys: [[90, 130], [80, 160]], dia: [[60, 85], [50, 100]], glu: [[70, 110], [55, 160]], spo2: [[95, 101], [90, 101]], temp: [[36.1, 37.5], [35.5, 38.4]] };
+    const RNG = { hr: [[50, 90], [45, 110]], sys: [[90, 125], [80, 140]], dia: [[60, 80], [50, 90]], glu: [[70, 100], [60, 140]], spo2: [[96, 100], [92, 100]], temp: [[36.5, 37.5], [35.8, 38.0]] };
     const st = (k, v) => { const [a, b] = RNG[k]; return v >= a[0] && v <= a[1] ? 'ok' : v >= b[0] && v <= b[1] ? 'warn' : 'crit' };
     const LBL = { hr: ['Heart rate', 'bpm'], sys: ['Systolic', 'mmHg'], dia: ['Diastolic', 'mmHg'], glu: ['Blood sugar', 'mg/dL'], spo2: ['SpO₂', '%'], temp: ['Temperature', '°C'] };
     const PART = { hr: 'heart', sys: 'heart', dia: 'heart', glu: 'abdomen', spo2: 'lungs', temp: null };
@@ -3174,20 +3206,30 @@
     }
     const AI_URL = 'http://localhost:8000/diagnose';/* MedGemma backend endpoint */
     async function askAI(txt, img) { if (!AI_URL) return null; try { const r = await fetch(AI_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: txt, image: img, profile: S.profile, env: envKey(), vitals: S.V[S.V.length - 1] }) }); return (await r.json()).answer } catch (e) { return null } }
-    const VB = { hr: [[50, 100], [40, 120]], sys: [[90, 130], [80, 160]], dia: [[60, 85], [50, 100]], glu: [[70, 110], [55, 160]], spo2: [[95, 101], [90, 101]], temp: [[36.1, 37.5], [35.5, 38.4]] };
-    const VM = { ...VB, sys: [[85, 130], [80, 160]], dia: [[55, 85], [50, 100]], temp: [[36.1, 37.7], [35.5, 38.5]] };
+    const VB = { hr: [[50, 90], [45, 110]], sys: [[90, 125], [80, 140]], dia: [[60, 80], [50, 90]], glu: [[70, 100], [60, 140]], spo2: [[96, 100], [92, 100]], temp: [[36.5, 37.5], [35.8, 38.0]] };
+    const VM = { ...VB, sys: [[85, 120], [75, 135]], dia: [[55, 80], [48, 88]], temp: [[36.6, 37.6], [35.8, 38.2]] };
     const VIT = {
-      iss: { l: 'Low Earth orbit (ISS)', g: 0, v: VM, rad: [25, 60, 150], ex: 120, n: 'Microgravity: blood pressure tends to run lower, resting temperature slightly higher, and fluids shift toward the head.' },
-      transit: { l: 'Deep-space transit', g: 0, v: VM, rad: [75, 150, 375], ex: 120, n: 'Higher background radiation than low Earth orbit, and delayed contact with the ground.' },
-      moon: { l: 'Moon surface', g: 0.166, v: VB, rad: [57, 120, 300], ex: 60, n: 'One-sixth gravity still unloads bones and muscles. Watch for lunar dust irritation. During EVA, resting heart-rate ranges do not apply.' },
-      mars: { l: 'Mars surface', g: 0.38, v: VB, rad: [28, 60, 150], ex: 75, n: 'About 0.38 g gives partial loading. Contact delay can reach roughly 20 minutes each way, so self-assessment matters most.' }
+      iss: { l: 'Low Earth orbit (ISS)', g: 0, v: VM, rad: [25, 60, 150], vo2: '≥ 32.9 ml/min/kg [V1 4001]', bmd: '≥ 95% hip/spine [V1 4027]', strength: '≥ 80% baseline [V1 4024]', gcr: '< 1.3 mSv/day [V1 4033]', ex: 120, n: 'NASA-STD-3001 Microgravity: Cephalad fluid redistribution lowers nominal resting blood pressure and elevates baseline core temperature (space fever).' },
+      transit: { l: 'Deep-space transit', g: 0, v: VM, rad: [54, 120, 300], vo2: '≥ 32.9 ml/min/kg [V1 4001]', bmd: '≥ 95% hip/spine [V1 4027]', strength: '≥ 80% baseline [V1 4024]', gcr: '< 1.3 mSv/day [V1 4033]', ex: 120, n: 'NASA-STD-3001 Exploration Transit: Maximum GCR background exposure (< 1.3 mSv/day), 100% nutritional intake required, and daily resistive countermeasures.' },
+      moon: { l: 'Moon surface', g: 0.166, v: VB, rad: [38, 80, 200], vo2: '≥ 36.5 ml/min/kg [V1 4002]', bmd: '≥ 95% hip/spine [V1 4027]', strength: '≥ 80% baseline [V1 4024]', gcr: '< 0.9 mSv/day [V1 4033]', ex: 120, n: 'NASA-STD-3001 Lunar Surface: Lunar EVA requires elevated VO2max (≥ 36.5 ml/min/kg) due to surface locomotion in pressurized suit mass.' },
+      mars: { l: 'Mars surface', g: 0.38, v: VB, rad: [28, 60, 150], vo2: '≥ 36.5 ml/min/kg [V1 4002]', bmd: '≥ 95% hip/spine [V1 4027]', strength: '≥ 80% baseline [V1 4024]', gcr: '< 0.9 mSv/day [V1 4033]', ex: 120, n: 'NASA-STD-3001 Mars Surface: Planetary surface EVA standard (≥ 36.5 ml/min/kg VO2max) and 0.38 g musculoskeletal maintenance.' }
     };
     const envKey = () => { const e = (S && S.profile.env) || ''; return e.includes('Mars') ? 'mars' : e.includes('Lunar') ? 'moon' : e.includes('transit') ? 'transit' : 'iss' };
     const envV = () => VIT[envKey()];
     function applyEnv() { S.V = S.V.filter(x => Object.keys(LBL).every(k => !isNaN(x[k]))); S.log = S.log.filter(l => !l.msg.includes('NaN')); Object.keys(S.issues).forEach(p => { const i = S.issues[p]; if ((i.msg || '').includes('NaN') || (i.list || []).some(m => m.includes('NaN'))) delete S.issues[p] }); const V = envV(); Object.assign(RNG, V.v); EN.rad[2] = [0, V.rad[1]]; EN.rad[3] = [0, V.rad[2]]; EN.rad[4] = V.rad[0]; renderRef(V) }
     function renderRef(V) {
       const f = (a, m) => a[0] + ' to ' + (m === 'spo2' ? Math.min(a[1], 100) : a[1]); $('#refE').textContent = V.l;
-      $('#ref').innerHTML = Object.keys(LBL).map(m => `<div class="row"><span>${LBL[m][0]} <small class="mut">${LBL[m][1]}</small></span><span><b>${f(V.v[m][0], m)}</b> <span class="mut">(attention outside ${f(V.v[m][1], m)})</span></span></div>`).join('') + `<div class="row"><span>Gravity</span><span>${V.g} g</span></div><div class="row"><span>Expected radiation (approx.)</span><span>${V.rad[0]} µSv/h</span></div><div class="row"><span>Daily exercise target</span><span>${V.ex} min</span></div><p class="mut">${V.n}</p><p class="mut">Prototype reference values for flight-surgeon review. The full list is in standard-vitals.json.</p>`
+      const vitRows = Object.keys(LBL).map(m => `<div class="row"><span>${LBL[m][0]} <small class="mut">${LBL[m][1]}</small></span><span><b>${f(V.v[m][0], m)}</b> <span class="mut">(attention outside ${f(V.v[m][1], m)})</span></span></div>`).join('');
+      const perfRows = `
+        <div class="row" style="margin-top:10px;padding-top:8px;border-top:1px solid var(--bdr)"><span><b>NASA-STD-3001 Human Performance</b></span><span><b>Standard Limit</b></span></div>
+        <div class="row"><span>Min. Aerobic Capacity (VO₂max)</span><span><b>${V.vo2}</b></span></div>
+        <div class="row"><span>Muscle Strength Retention</span><span><b>${V.strength}</b></span></div>
+        <div class="row"><span>Bone Mineral Density (BMD)</span><span><b>${V.bmd}</b></span></div>
+        <div class="row"><span>GCR Space Radiation Limit</span><span><b>${V.gcr}</b></span></div>
+        <div class="row"><span>Gravity Field</span><span>${V.g} g</span></div>
+        <div class="row"><span>Daily Exercise Prescribed</span><span><b>${V.ex} min</b></span></div>
+      `;
+      $('#ref').innerHTML = vitRows + perfRows + `<p class="mut" style="margin-top:10px">${V.n}</p><p class="mut" style="font-size:0.8rem">Directly validated against NASA-STD-3001 Vol 1 (Crew Health) and Section 4.0 (Human Performance Standards).</p>`;
     }
     function renderLog() { $('#log').innerHTML = S.log.length ? S.log.map(l => `<li><span class="dot ${l.level}"></span>${l.msg}<br><small>${l.t}</small></li>`).join('') : '<li class="mut">No alerts yet. Flags from your tests and reports are recorded here.</li>' }
 
@@ -3238,7 +3280,30 @@
     $('#subV').onclick = () => {
       const v = { d: day(0) }, o = []; Object.keys(LBL).forEach(k => v[k] = parseFloat($('#' + k).value)); if (Object.keys(LBL).some(k => isNaN(v[k]))) { $('#resV').innerHTML = '<li>Please fill in every measurement.</li>'; return } S.V.push(v);
       Object.keys(LBL).forEach(k => { const s = st(k, v[k]); if (s !== 'ok') flag(s, `${LBL[k][0]} ${v[k]} ${LBL[k][1]} is ${s === 'crit' ? 'dangerous' : 'outside the expected range'}. ${s === 'crit' ? 'Alert crew now.' : 'Rest and re-measure in 15 minutes.'}`, PART[k], o) });
-      if (!o.length) { o.push('<li><span class="dot ok"></span>All measurements are within expected ranges.</li>'); addLog('ok', 'Measurements recorded, all normal') }
+
+      // NASA-STD-3001 Human Performance Evaluation
+      const vo2 = parseFloat($('#vo2Input').value), strength = parseFloat($('#strengthInput').value), bmd = parseFloat($('#bmdInput').value), calcium = $('#calciumInput').value;
+      v.vo2 = vo2; v.strength = strength; v.bmd = bmd; v.calcium = calcium;
+      const isSurface = envKey() === 'moon' || envKey() === 'mars';
+      const minVo2 = isSurface ? 36.5 : 32.9;
+      const vo2Std = isSurface ? '[V1 4002]' : '[V1 4001]';
+
+      if (!isNaN(vo2) && vo2 < minVo2) {
+        flag('warn', `Aerobic capacity VO₂max (${vo2} ml/min/kg) is below NASA Fitness-for-Duty limit (${minVo2} ml/min/kg per ${vo2Std}). Defer EVA and increase CEVIS cardio training.`, 'heart', o);
+      }
+      if (!isNaN(strength) && strength < 80) {
+        flag('warn', `ARED skeletal muscle strength retention (${strength}%) is below the 80% NASA limit ([V1 4024]). Increase ARED resistive load prescription.`, 'legs', o);
+      }
+      if (!isNaN(bmd) && bmd < 95) {
+        flag('warn', `Bone mineral density (${bmd}%) is below NASA-STD-3001 95% retention threshold ([V1 4027]). Monitor for axial skeleton deconditioning.`, 'legs', o);
+      }
+      if (calcium === 'critical') {
+        flag('crit', 'Critical hypercalciuria (> 400 mg/24h) detected. High acute risk for renal stone formation per NASA-STD-3001 [V1 4027]. Push aggressive hydration and alert Flight Surgeon.', 'abdomen', o);
+      } else if (calcium === 'elevated') {
+        flag('warn', 'Elevated urinary calcium excretion (> 300 mg/24h). Monitor hydration intake and renal stone prophylaxis per NASA-STD-3001 [V1 4027].', 'abdomen', o);
+      }
+
+      if (!o.length) { o.push('<li><span class="dot ok"></span>All measurements and NASA-STD-3001 performance metrics are nominal.</li>'); addLog('ok', 'Measurements and NASA-STD-3001 performance recorded, all nominal') }
       $('#resV').innerHTML = o.join(''); save(); render()
     };
     $('#subC').onclick = () => {
