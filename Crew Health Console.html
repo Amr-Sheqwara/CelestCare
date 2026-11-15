@@ -97,8 +97,8 @@ img.pv{max-width:140px;border-radius:6px;margin-top:8px;display:block}
 
 <div id="app" hidden>
 <header><div class="hrow"><h1 style="font-size:1.1rem">Crew Health Console</h1><span class="chip" id="cName"></span><span class="chip" id="cBlood"></span><span class="chip" id="cEnv"></span><span class="pill" id="sysP"><i></i><span id="sysT"></span></span><span class="pill"><i></i><span id="clkT">UTC</span></span>
-<span style="flex:1"></span><button class="thm"></button><button id="out">Sign out</button></div>
-<nav id="nav"><button data-t="dash" class="on">Dashboard</button><button data-t="check">Daily check-in</button><button data-t="vit">Measurements</button><button data-t="sym">Report a problem</button><button data-t="tr">Trends</button><button data-t="rt">Routine<span class="badge" id="due"></span></button><button data-t="hz">NASA risks</button><button data-t="sl">Sleep</button><button data-t="en">Environment</button></nav></header>
+<span style="flex:1"></span><button class="thm"></button><button id="hdrSlp"></button><button id="out">Sign out</button></div>
+<nav id="nav"><button data-t="dash" class="on">Dashboard</button><button data-t="check">Daily check-in</button><button data-t="vit">Measurements</button><button data-t="sym">Report a problem</button><button data-t="tr">Trends</button><button data-t="rt">Routine<span class="badge" id="due"></span></button><button data-t="hz">NASA risks</button><button data-t="en">Environment</button><button data-t="ast">Motor Test</button><button data-t="mem">Memory Test</button></nav></header>
 
 <main class="wrap">
 <div id="emg" class="panel"><h2 style="color:var(--bad)">Emergency alert sent</h2><p id="emgTxt"></p><ul class="log" id="emgList"></ul><button id="emgX">Dismiss</button></div>
@@ -163,8 +163,9 @@ img.pv{max-width:140px;border-radius:6px;margin-top:8px;display:block}
 <details><summary>Exercise plan</summary><p class="mut">Aim for about 2 hours a day, 6 days a week: resistive training (bones and muscle), treadmill (heart and legs), cycle ergometer (cardio). Add core and back work to protect the spine.</p></details>
 <p class="mut">General guidance for this prototype. Follow your flight surgeon’s protocol.</p></div></div></section>
 <section id="t-en" class="sec"><div class="panel"><h2>Ship and suit sensors <span class="pill"><i></i>Live</span></h2><p class="mut">Simulated feeds from sensors across the vehicle and on your suit, updated every 3 seconds. Alerts for the place you are in flag your lungs on the body map. A dangerous reading anywhere notifies the crew team.</p><label for="enLoc">You are in</label><select id="enLoc"></select><p class="mut" style="margin-top:12px">Try a test event:</p><div id="enEv" style="display:flex;gap:8px;flex-wrap:wrap"></div></div><div class="charts" id="enZ" style="margin-top:14px"></div></section>
-<section id="t-sl" class="sec"><div class="two"><div class="panel"><h2>Sleep mode</h2><div id="slSt"></div><p><button class="pri" id="slBtn" style="font-size:1.1rem;padding:12px 22px"></button></p><div id="slMsg"></div><label for="dimR">Night screen dimming</label><input type="range" id="dimR" min="20" max="80" value="45"><p class="mut">Sleep mode switches to a dark red-amber palette and dims the screen so your eyes can rest. A web page can’t change the hardware brightness, so it dims with an overlay; also lower your device brightness. A critical alert wakes the screen automatically.</p></div><div class="panel"><h2>Recent sleep</h2><ul class="log" id="slLog"></ul></div></div></section>
 <section id="t-hz" class="sec"><div class="panel"><h2>Your risk watch</h2><p class="mut">NASA’s Human Research Program tracks these spaceflight risks. Colors come from your latest readings and last three check-ins. Grey means this console can’t measure the risk, so report symptoms instead.</p><div id="rw"></div></div><h2 style="margin:18px 0 8px">The five hazards of spaceflight</h2><div class="charts" id="hz"></div><p class="mut">Source: <a href="https://www.nasa.gov/hrp/hazards/" target="_blank" rel="noopener">NASA hazards</a> and <a href="https://www.nasa.gov/hrp/risks/" target="_blank" rel="noopener">NASA risks</a>.</p></section>
+<section id="t-ast" class="sec"><div class="two"><div class="panel"><h2>Motor Skills — Asteroid Intercept</h2><p class="mut">Controls: HOTAS / gamepad (left stick = aim, RT/R2 = fire) or keyboard (arrow keys + Space). Destroy as many asteroids as you can in 60 seconds. Results are logged to your health record.</p><div id="astStatus" style="margin:8px 0;font-size:.85rem"></div><div style="display:flex;gap:8px;margin-bottom:10px"><button class="pri" id="astStart">Start test</button><button id="astReset" style="display:none">Reset</button></div><canvas id="astCanvas" width="640" height="400" style="width:100%;max-width:640px;border:1px solid var(--border);border-radius:6px;background:#000;display:block"></canvas></div><div class="panel"><h2>Motor test log</h2><ul class="log" id="astLog"><li class="mut">No sessions yet.</li></ul></div></div></section>
+<section id="t-mem" class="sec"><div class="two"><div class="panel"><h2>Memory Test — Pattern Recall</h2><p class="mut">Flip two cards at a time to find matching pairs. Complete all 8 pairs as fast as possible with as few errors as possible. Results are logged to your health record.</p><div id="memStatus" style="margin:8px 0;font-size:.85rem"></div><div style="display:flex;gap:8px;margin-bottom:12px"><button class="pri" id="memStart">Start test</button></div><div id="memGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:420px"></div></div><div class="panel"><h2>Memory test log</h2><ul class="log" id="memLog"><li class="mut">No sessions yet.</li></ul></div></div></section>
 </main></div>
 
 <script>
@@ -212,15 +213,15 @@ function ecg(hr){const p=$('#ecgp');if(!p)return;p.setAttribute('d','M0 30'+' l1
 function status(){const n=Object.keys(S.issues).length,c=Object.values(S.issues).some(i=>i.level==='crit');$('#sysP').className='pill '+(c?'crit':n?'warn':'ok');$('#sysT').textContent=c?'Critical alert':n?n+' active flag'+(n>1?'s':''):'All systems nominal'}
 const fmt=ms=>{const s=Math.floor(ms/1000),p=n=>String(n).padStart(2,'0');return p(Math.floor(s/3600))+':'+p(Math.floor(s/60)%60)+':'+p(s%60)};
 function applyMode(){const on=!!(S.sleep&&S.sleep.on),r=document.documentElement;r.dataset.mode=on?'sleep':'';r.style.setProperty('--dimv',(S.dim||45)/100)}
-function renderSleep(){const on=S.sleep&&S.sleep.on;$('#slSt').innerHTML=on?`<h3>Sleeping since ${new Date(S.sleep.start).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</h3><p style="font-size:2rem;margin:.2em 0" id="slEl">${fmt(Date.now()-new Date(S.sleep.start))}</p>`:'<h3>You are awake</h3><p class="mut">Press the button when you go to bed. The screen dims and the colors turn warm and dark.</p>';
-$('#slBtn').textContent=on?'I’m awake':'Going to sleep';$('#dimR').value=S.dim||45;
-$('#slLog').innerHTML=(S.sl||[]).slice(0,6).map(x=>`<li>${x.d}: <b>${x.h} h</b> <small>${x.a} to ${x.b}</small></li>`).join('')||'<li class="mut">No sleep sessions yet.</li>'}
-function tickSleep(){const e=$('#slEl');if(e&&S.sleep&&S.sleep.on)e.textContent=fmt(Date.now()-new Date(S.sleep.start))}
-function sleepGo(){S.sleep={on:true,start:new Date().toISOString()};$('#slMsg').innerHTML='';addLog('ok','Sleep started');save();render();tab('sl')}
+function renderSleep(){renderHdrSlp();}
+
+
+
+function sleepGo(){S.sleep={on:true,start:new Date().toISOString()};addLog('ok','Sleep started');save();render();}
 function wake(auto){if(!S.sleep||!S.sleep.on)return;const s0=new Date(S.sleep.start),ms=Date.now()-s0,h=+(ms/36e5).toFixed(1),t=d=>d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}),o=[];S.sleep={on:false};
-if(ms<9e5){$('#slMsg').innerHTML='<p class="mut">Sessions under 15 minutes are not recorded.</p>'}else{S.sl=S.sl||[];S.sl.unshift({d:day(0),h,a:t(s0),b:t(new Date())});const c=S.C.find(x=>x.d===day(0));if(c)c.sleep=h;$('#sleep').value=h;
+if(ms<9e5){}else{S.sl=S.sl||[];S.sl.unshift({d:day(0),h,a:t(s0),b:t(new Date())});const c=S.C.find(x=>x.d===day(0));if(c)c.sleep=h;$('#sleep').value=h;
 if(h<6)flag('warn','Slept only '+h+' h. Sleep deprivation raises error risk, so protect a full sleep period tonight.','brain',o);else addLog('ok','Slept '+h+' h');
-$('#slMsg').innerHTML=`<p><b>Good morning, ${S.profile.name}.</b> You slept ${h} h${auto?' (ended by an emergency alert)':''}. The value was added to your daily check-in.</p><ul class="log">${o.join('')}</ul>`}
+}
 save();render()}
 const EN={co2:['CO₂','ppm',[0,3000],[0,5000],2400,0],o2:['Oxygen','%',[19.5,23.5],[18,25],21,1],press:['Pressure','kPa',[95,105],[90,110],101.3,1],temp:['Temperature','°C',[18,27],[15,30],22.5,1],hum:['Humidity','%',[25,65],[15,75],45,0],pm:['Particulates PM2.5','µg/m³',[0,35],[0,150],8,0],co:['Carbon monoxide','ppm',[0,10],[0,35],1.5,1],rad:['Radiation','µSv/h',[0,60],[0,150],25,0],noise:['Noise','dB',[0,70],[0,85],62,0]};
 const ZN=[['Crew quarters',['co2','o2','temp','hum','noise']],['Laboratory',['co2','o2','pm','co','rad']],['Galley',['co2','pm','co','temp','hum']],['Airlock',['press','o2','rad']],['Command deck',['co2','o2','temp','noise']],['Your suit (EVA)',['o2','co2','temp','rad']]];
@@ -334,7 +335,9 @@ addLog(lvl,h[2]+' (self-report, severity '+sev+'/5)',part);if(lvl==='crit')notif
 $$('.part').forEach(g=>{const f=()=>{sel=g.dataset.p;renderFig();renderPart()};g.onclick=f;g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f()}}});
 $$('#nav button').forEach(b=>b.onclick=()=>tab(b.dataset.t));
 [['mood','oMood'],['anx','oAnx'],['sev','oSev']].forEach(([a,b])=>$('#'+a).oninput=()=>$('#'+b).textContent=$('#'+a).value);
-$('#slBtn').onclick=()=>S.sleep&&S.sleep.on?wake():sleepGo();$('#dimR').oninput=e=>{S.dim=+e.target.value;applyMode();save()};
+
+function renderHdrSlp(){const b=$('#hdrSlp');if(!b)return;const on=!!(S&&S.sleep&&S.sleep.on);b.textContent=on?'I\'m awake':'Sleep';}
+$('#hdrSlp').onclick=()=>{if(S&&S.sleep&&S.sleep.on)wake();else sleepGo();};
 $('#enLoc').onchange=e=>{S.loc=e.target.value;save();renderEnv()};
 $('#enEv').onclick=e=>{const i=e.target.dataset.ev;if(i==null)return;if(i==='clr'){ev={};return}const x=EVT[i];ev[(x[1]==='*'?'*':x[1])+'|'+x[2]]={t:x[3],n:8}};
 setInterval(tickEnv,3000);
@@ -349,4 +352,249 @@ function theme(t){if(t){document.documentElement.dataset.theme=t;try{localStorag
 $$('.thm').forEach(b=>b.onclick=()=>theme(isDark()?'light':'dark'));
 {let t=null;try{t=localStorage.getItem('chc-theme')}catch(e){}if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;theme()}
 S=load();if(S&&S.profile)enter();else S=null;
+
+// ── ASTEROID MOTOR TEST ──────────────────────────────────────────────────────
+(function(){
+  const DURATION=60,MAX_AST=10,BULLET_SPEED=7,SHIP_SPEED=3.5;
+  let raf=null,gameActive=false;
+  let ship,bullets,asteroids,score,shots,hits,startTime,elapsed,gpIdx=null;
+  let keys={};
+
+  window.addEventListener('gamepadconnected',e=>{gpIdx=e.gamepad.index;updateAstStatus();});
+  window.addEventListener('gamepaddisconnected',()=>{gpIdx=null;updateAstStatus();});
+  window.addEventListener('keydown',e=>{keys[e.code]=true;if(gameActive&&e.code==='Space'){e.preventDefault();}});
+  window.addEventListener('keyup',e=>{keys[e.code]=false;});
+
+  function updateAstStatus(){
+    const el=$('#astStatus');if(!el)return;
+    el.textContent=gpIdx!==null?'HOTAS / Gamepad connected — ready.':'No gamepad detected — using keyboard (arrows + Space).';
+  }
+
+  function initGame(){
+    const c=$('#astCanvas');
+    ship={x:c.width/2,y:c.height/2,angle:-Math.PI/2,r:12,firecool:0};
+    bullets=[];asteroids=[];score=0;shots=0;hits=0;elapsed=0;
+    startTime=performance.now();gameActive=true;
+    spawnAsteroid(c);spawnAsteroid(c);spawnAsteroid(c);
+    updateAstStatus();
+  }
+
+  function spawnAsteroid(c){
+    if(asteroids.length>=MAX_AST)return;
+    const edge=Math.floor(Math.random()*4);
+    let x,y;
+    if(edge===0){x=Math.random()*c.width;y=-30;}
+    else if(edge===1){x=c.width+30;y=Math.random()*c.height;}
+    else if(edge===2){x=Math.random()*c.width;y=c.height+30;}
+    else{x=-30;y=Math.random()*c.height;}
+    const angle=Math.atan2(c.height/2-y,c.width/2-x)+( Math.random()-.5)*1.2;
+    const speed=.6+Math.random()*.8;
+    const r=16+Math.floor(Math.random()*22);
+    const spawnTime=performance.now();
+    asteroids.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,r,spawnTime,sides:Math.floor(Math.random()*4)+5,rot:Math.random()*Math.PI*2,rotSpeed:(Math.random()-.5)*.03});
+  }
+
+  let lastFireKb=false;
+  function gameLoop(ts){
+    if(!gameActive)return;
+    const c=$('#astCanvas');if(!c)return;
+    const ctx=c.getContext('2d');
+    elapsed=(ts-startTime)/1000;
+    const remaining=DURATION-elapsed;
+    if(remaining<=0){endGame();return;}
+
+    // gamepad input
+    let gax=0,gay=0,gfire=false;
+    if(gpIdx!==null){
+      const gp=navigator.getGamepads()[gpIdx];
+      if(gp){gax=Math.abs(gp.axes[0])>.12?gp.axes[0]:0;gay=Math.abs(gp.axes[1])>.12?gp.axes[1]:0;gfire=gp.buttons[7]?.pressed||gp.buttons[5]?.pressed||gp.buttons[0]?.pressed;}
+    }
+    // keyboard input
+    if(keys['ArrowLeft'])ship.angle-=.06;
+    if(keys['ArrowRight'])ship.angle+=.06;
+    if(keys['ArrowUp']){ship.vx=(ship.vx||0)+Math.cos(ship.angle)*.2;ship.vy=(ship.vy||0)+Math.sin(ship.angle)*.2;}
+    if(keys['ArrowDown']){ship.vx=(ship.vx||0)-Math.cos(ship.angle)*.1;ship.vy=(ship.vy||0)-Math.sin(ship.angle)*.1;}
+    // gamepad axis controls thrust & rotation
+    if(gpIdx!==null){ship.angle+=gax*.05;if(Math.abs(gay)>.1){ship.vx=(ship.vx||0)-Math.cos(ship.angle)*gay*.25;ship.vy=(ship.vy||0)-Math.sin(ship.angle)*gay*.25;}}
+
+    ship.vx=(ship.vx||0)*.94;ship.vy=(ship.vy||0)*.94;
+    ship.x+=ship.vx;ship.y+=ship.vy;
+    ship.x=((ship.x%c.width)+c.width)%c.width;
+    ship.y=((ship.y%c.height)+c.height)%c.height;
+    ship.firecool=Math.max(0,ship.firecool-1);
+
+    const fireNow=(keys['Space']||gfire);
+    if(fireNow&&!lastFireKb&&ship.firecool===0){
+      shots++;bullets.push({x:ship.x,y:ship.y,vx:Math.cos(ship.angle)*BULLET_SPEED,vy:Math.sin(ship.angle)*BULLET_SPEED,life:55});
+      ship.firecool=10;
+    }
+    lastFireKb=fireNow;
+
+    bullets.forEach(b=>{b.x+=b.vx;b.y+=b.vy;b.life--;});
+    bullets=bullets.filter(b=>b.life>0&&b.x>-10&&b.x<c.width+10&&b.y>-10&&b.y<c.height+10);
+
+    asteroids.forEach(a=>{a.x+=a.vx;a.y+=a.vy;a.rot+=a.rotSpeed;});
+
+    // collision bullet-asteroid
+    const toRemoveB=new Set(),toRemoveA=new Set();
+    bullets.forEach((b,bi)=>{
+      asteroids.forEach((a,ai)=>{
+        const dx=b.x-a.x,dy=b.y-a.y;
+        if(dx*dx+dy*dy<a.r*a.r){toRemoveB.add(bi);toRemoveA.add(ai);hits++;score+=Math.max(1,Math.round(10-(performance.now()-a.spawnTime)/1000));}
+      });
+    });
+    bullets=bullets.filter((_,i)=>!toRemoveB.has(i));
+    if(toRemoveA.size){asteroids=asteroids.filter((_,i)=>!toRemoveA.has(i));for(let i=0;i<toRemoveA.size;i++)spawnAsteroid(c);}
+
+    // remove out-of-bounds asteroids and respawn
+    const inBounds=a=>a.x>-60&&a.x<c.width+60&&a.y>-60&&a.y<c.height+60;
+    const lost=asteroids.filter(a=>!inBounds(a)).length;
+    asteroids=asteroids.filter(inBounds);
+    for(let i=0;i<lost;i++)spawnAsteroid(c);
+
+    while(asteroids.length<3)spawnAsteroid(c);
+
+    // draw
+    ctx.fillStyle='#000';ctx.fillRect(0,0,c.width,c.height);
+    // stars (static seed)
+    ctx.fillStyle='rgba(255,255,255,.5)';
+    for(let i=0;i<60;i++){const sx=((i*137+41)%c.width),sy=((i*97+13)%c.height);ctx.fillRect(sx,sy,1,1);}
+    // timer bar
+    const pct=remaining/DURATION;
+    ctx.fillStyle='#1a1a2e';ctx.fillRect(0,0,c.width,8);
+    ctx.fillStyle=pct>.4?'#4a9eff':pct>.2?'#f59e0b':'#ef4444';ctx.fillRect(0,0,c.width*pct,8);
+    // HUD
+    ctx.fillStyle='#fff';ctx.font='13px monospace';
+    ctx.fillText('SCORE '+score,8,24);
+    ctx.fillText('SHOTS '+shots,8,40);
+    ctx.fillText(Math.ceil(remaining)+'s',c.width-36,24);
+    // asteroids
+    ctx.strokeStyle='#a0c4ff';ctx.lineWidth=1.5;
+    asteroids.forEach(a=>{
+      ctx.save();ctx.translate(a.x,a.y);ctx.rotate(a.rot);
+      ctx.beginPath();
+      for(let i=0;i<a.sides;i++){const ang=(i/a.sides)*Math.PI*2,rr=a.r*(0.75+.25*Math.sin(i*2.3));ctx.lineTo(Math.cos(ang)*rr,Math.sin(ang)*rr);}
+      ctx.closePath();ctx.stroke();ctx.restore();
+    });
+    // bullets
+    ctx.fillStyle='#fbbf24';
+    bullets.forEach(b=>{ctx.beginPath();ctx.arc(b.x,b.y,3,0,Math.PI*2);ctx.fill();});
+    // ship
+    ctx.save();ctx.translate(ship.x,ship.y);ctx.rotate(ship.angle);
+    ctx.strokeStyle='#60efff';ctx.lineWidth=2;ctx.beginPath();
+    ctx.moveTo(14,0);ctx.lineTo(-10,8);ctx.lineTo(-6,0);ctx.lineTo(-10,-8);ctx.closePath();ctx.stroke();
+    if(keys['ArrowUp']||(gpIdx!==null&&Math.abs((navigator.getGamepads()[gpIdx]?.axes[1]||0))>.12)){
+      ctx.fillStyle='#f97316';ctx.beginPath();ctx.moveTo(-6,0);ctx.lineTo(-14,4);ctx.lineTo(-14,-4);ctx.fill();
+    }
+    ctx.restore();
+
+    raf=requestAnimationFrame(gameLoop);
+  }
+
+  function endGame(){
+    gameActive=false;cancelAnimationFrame(raf);
+    const acc=shots>0?Math.round(hits/shots*100):0;
+    const $btn=$('#astStart');if($btn){$btn.textContent='Start test';$btn.disabled=false;}
+    const $rst=$('#astReset');if($rst)$rst.style.display='';
+    const summary=`Score ${score} | Accuracy ${acc}% (${hits}/${shots}) | ${DURATION}s session`;
+    if(S){S.motorTests=S.motorTests||[];S.motorTests.unshift({d:day(0),score,shots,hits,acc,ts:new Date().toISOString()});save();}
+    const log=$('#astLog');
+    if(log){if(log.querySelector('.mut'))log.innerHTML='';const li=document.createElement('li');li.innerHTML=`<b>${day(0)}</b> — ${summary}`;log.prepend(li);}
+    addLog(acc>=50?'ok':'warn',`Motor test: Score ${score}, Accuracy ${acc}%`);
+    const st=$('#astStatus');if(st)st.textContent='Session complete — '+summary;
+    // draw final frame message
+    const c=$('#astCanvas');if(c){const ctx=c.getContext('2d');ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#fff';ctx.font='bold 22px monospace';ctx.textAlign='center';ctx.fillText('SESSION COMPLETE',c.width/2,c.height/2-24);ctx.font='16px monospace';ctx.fillText(summary,c.width/2,c.height/2+8);ctx.textAlign='left';}
+  }
+
+  document.addEventListener('DOMContentLoaded',()=>{},false);
+  // Wire buttons after DOM ready via delegation
+  document.addEventListener('click',function(e){
+    if(e.target.id==='astStart'){
+      if(gameActive)return;
+      e.target.textContent='Running…';e.target.disabled=true;
+      const rst=$('#astReset');if(rst)rst.style.display='none';
+      initGame();raf=requestAnimationFrame(gameLoop);
+    }
+    if(e.target.id==='astReset'){
+      cancelAnimationFrame(raf);gameActive=false;
+      const c=$('#astCanvas');if(c){const ctx=c.getContext('2d');ctx.fillStyle='#000';ctx.fillRect(0,0,c.width,c.height);}
+      const st=$('#astStart');if(st){st.textContent='Start test';st.disabled=false;}
+      e.target.style.display='none';
+      const sts=$('#astStatus');if(sts)updateAstStatus();
+    }
+  });
+  setTimeout(updateAstStatus,500);
+})();
+
+// ── MEMORY TEST ─────────────────────────────────────────────────────────────
+(function(){
+  const SYMBOLS=['RKT','SAT','PLN','STR','MRS','JUP','MNR','CMT'];
+  const COLORS= ['#4a9eff','#f59e0b','#60efff','#a78bfa','#f87171','#34d399','#fb923c','#e879f9'];
+  let deck=[],flipped=[],matched=new Set(),errors=0,memActive=false,startTime=null,lockBoard=false;
+
+  function buildGrid(){
+    const grid=$('#memGrid');if(!grid)return;
+    const pairs=[...SYMBOLS,...SYMBOLS];
+    // shuffle Fisher-Yates
+    for(let i=pairs.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pairs[i],pairs[j]]=[pairs[j],pairs[i]];}
+    deck=pairs;flipped=[];matched=new Set();errors=0;memActive=false;startTime=null;lockBoard=false;
+    grid.innerHTML='';
+    pairs.forEach((sym,i)=>{
+      const col=COLORS[SYMBOLS.indexOf(sym)];
+      const card=document.createElement('div');
+      card.dataset.i=i;card.dataset.sym=sym;
+      card.style.cssText=`aspect-ratio:1;border-radius:8px;cursor:pointer;border:2px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;letter-spacing:.05em;user-select:none;transition:background .15s,color .15s;`;
+      card.textContent='?';
+      card.addEventListener('click',()=>cardClick(card,sym,i,col));
+      grid.appendChild(card);
+    });
+    const st=$('#memStatus');if(st)st.textContent='Grid ready. Click Start test, then flip cards to find pairs.';
+  }
+
+  function cardClick(card,sym,i,col){
+    if(!memActive||lockBoard||matched.has(i)||flipped.some(f=>f.i===i))return;
+    if(!startTime)startTime=performance.now();
+    card.style.background=col;card.style.color='#000';card.textContent=sym;
+    flipped.push({card,sym,i});
+    if(flipped.length===2){
+      lockBoard=true;
+      const [a,b]=flipped;
+      if(a.sym===b.sym){
+        matched.add(a.i);matched.add(b.i);
+        flipped=[];lockBoard=false;
+        if(matched.size===deck.length)endMemGame();
+      } else {
+        errors++;
+        setTimeout(()=>{
+          a.card.style.background='var(--surface)';a.card.style.color='';a.card.textContent='?';
+          b.card.style.background='var(--surface)';b.card.style.color='';b.card.textContent='?';
+          flipped=[];lockBoard=false;
+        },900);
+      }
+      const st=$('#memStatus');if(st)st.textContent=`Pairs found: ${matched.size/2}/8 | Errors: ${errors}`;
+    }
+  }
+
+  function endMemGame(){
+    memActive=false;
+    const elapsed=startTime?((performance.now()-startTime)/1000).toFixed(1):0;
+    const summary=`${elapsed}s | Errors: ${errors} | Pairs: 8/8`;
+    if(S){S.memTests=S.memTests||[];S.memTests.unshift({d:day(0),elapsed:+elapsed,errors,ts:new Date().toISOString()});save();}
+    const log=$('#memLog');
+    if(log){if(log.querySelector('.mut'))log.innerHTML='';const li=document.createElement('li');li.innerHTML=`<b>${day(0)}</b> — ${summary}`;log.prepend(li);}
+    const level=errors<=2?'ok':errors<=6?'warn':'crit';
+    addLog(level,`Memory test: ${elapsed}s, ${errors} errors`);
+    const st=$('#memStatus');if(st)st.textContent='Complete — '+summary;
+    const btn=$('#memStart');if(btn){btn.textContent='Try again';btn.disabled=false;}
+  }
+
+  document.addEventListener('click',function(e){
+    if(e.target.id==='memStart'){
+      e.target.textContent='Running…';e.target.disabled=true;
+      buildGrid();memActive=true;
+      setTimeout(()=>{if(e.target)e.target.disabled=false;},500);
+    }
+  });
+  setTimeout(buildGrid,600);
+})();
 </script></body></html>
