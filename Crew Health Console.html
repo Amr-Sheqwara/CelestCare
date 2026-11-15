@@ -3,169 +3,1062 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Crew Health Console</title>
 <style>
-:root{--bg:#eef2f6;--panel:#fff;--ink:#14202e;--mut:#5a6b7d;--line:#d3dce6;--acc:#0b6bcb;--ok:#1c8a55;--warn:#a86d00;--bad:#c62d2d;--sil:#e3eaf2;--yel:#f2b73c;
-box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a1220;--panel:#111c2f;--ink:#e6edf6;--mut:#8fa1b6;--line:#243450;--acc:#5aa9ff;--ok:#3ed08a;--warn:#f2b73c;--bad:#ff5a5a;--sil:#1a2a44;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#0a1220;--panel:#111c2f;--ink:#e6edf6;--mut:#8fa1b6;--line:#243450;--acc:#5aa9ff;--ok:#3ed08a;--warn:#f2b73c;--bad:#ff5a5a;--sil:#1a2a44;color-scheme:dark}
-:root[data-mode="sleep"]{--bg:#060203;--panel:#0e0708;--ink:#d08a70;--mut:#8a5546;--line:#2b1713;--acc:#c0563a;--ok:#9a7a3c;--warn:#b07a2c;--bad:#d04444;--sil:#1c0f0c;--yel:#b07a2c;color-scheme:dark}
-#dim{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:50;transition:opacity 2.5s ease}
-:root[data-mode="sleep"] #dim{opacity:var(--dimv,.45)}:root[data-mode="sleep"] .scan{display:none}
-body,.panel,header,.tile,input,select,textarea{transition:background-color 1.8s,color 1.8s,border-color 1.8s}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-variant-numeric:tabular-nums}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--panel);z-index:10}
-h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.01em}h2{font-size:1.05rem;margin-bottom:.6rem}h3{font-size:.95rem}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
-.wrap{max-width:1100px;margin:0 auto;padding:16px}
-label{display:block;font-size:.85rem;color:var(--mut);margin:10px 0 3px}
-input,select,textarea,button{font:inherit;color:inherit}
-input[type=text],input[type=number],select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg)}
-button{cursor:pointer;border:1px solid var(--line);background:var(--panel);padding:8px 14px;border-radius:6px}
-button.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
-:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:11;background:var(--panel);border-bottom:1px solid var(--line)}
-.hrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 16px;max-width:1100px;margin:0 auto}
-.chip{font-size:.8rem;border:1px solid var(--line);border-radius:99px;padding:2px 10px;color:var(--mut)}
-nav{display:flex;gap:4px;overflow-x:auto;padding:0 16px 8px;max-width:1100px;margin:0 auto}
-nav button{border:0;background:none;color:var(--mut);white-space:nowrap;border-radius:6px}
-nav button.on{background:var(--bg);color:var(--ink);font-weight:650;box-shadow:inset 0 -2px var(--acc)}
-.badge{background:var(--bad);color:#fff;border-radius:99px;font-size:.7rem;padding:0 6px;margin-left:4px}
-.grid{display:grid;gap:14px;grid-template-columns:minmax(240px,320px) 1fr}
-@media (max-width:760px){.grid{grid-template-columns:1fr}}
-.tiles{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
-.tile{border:1px solid var(--line);border-left:5px solid var(--ok);border-radius:8px;padding:8px 10px}
-.tile.warn{border-left-color:var(--warn)}.tile.crit{border-left-color:var(--bad)}
-.tile b{font-size:1.5rem;display:block}.tile span{font-size:.8rem;color:var(--mut)}
-.part *{fill:var(--sil);stroke:var(--mut);stroke-width:1;cursor:pointer}
-.body{fill:var(--panel);stroke:var(--mut);stroke-width:1.2}.ln{fill:none;stroke:var(--mut);stroke-width:1;opacity:.6}.part .ln{fill:none!important;animation:none!important}
-.part:hover *,.part.sel *{stroke:var(--acc);stroke-width:2.5}
-.part.red *{--c:var(--bad);animation:bl 1s infinite}.part.yel *{--c:var(--yel);animation:bl 1.4s infinite}
-.part.red{filter:drop-shadow(0 0 7px var(--bad))}.part.yel{filter:drop-shadow(0 0 7px var(--yel))}
-@keyframes bl{0%,100%{fill:var(--c)}50%{fill:var(--sil)}}
-@keyframes beat{0%,100%{transform:scale(1)}12%{transform:scale(1.16)}24%{transform:scale(1)}36%{transform:scale(1.09)}50%{transform:scale(1)}}
-@keyframes br{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
-@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-@keyframes ecgm{to{transform:translateX(-80px)}}
-@keyframes draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
-@keyframes ping{0%{box-shadow:0 0 0 0 currentColor}100%{box-shadow:0 0 0 10px transparent}}
-@keyframes scan{0%{transform:translateY(0);opacity:0}10%,90%{opacity:.8}100%{transform:translateY(380px);opacity:0}}
-@keyframes sh{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 22px 2px var(--bad)}}
-.part[data-p=heart]{transform-box:fill-box;transform-origin:50% 60%;animation:beat calc(60s/var(--bpm,70)) ease-in-out infinite}
-.part[data-p=lungs]{transform-box:fill-box;transform-origin:50% 55%;animation:br 4.5s ease-in-out infinite}
-.scan{animation:scan 5s ease-in-out infinite;pointer-events:none;filter:drop-shadow(0 0 4px var(--acc))}
-.sec.on{animation:up .4s ease both}.panel,.tile{animation:up .5s ease both}.log li{animation:up .35s ease both}
-#emg.on{animation:sh 1.2s infinite}
-button{transition:transform .15s,box-shadow .15s}button:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.2)}button:active{transform:none}
-.pill{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;border:1px solid var(--line);border-radius:99px;padding:2px 10px;font-weight:600}
-.pill i{width:8px;height:8px;border-radius:50%;background:currentColor;color:var(--ok);animation:ping 1.6s infinite}.pill.warn i{color:var(--warn)}.pill.crit i{color:var(--bad)}
-.ecg{width:100%;height:60px;margin-bottom:10px;border-radius:6px;background:linear-gradient(var(--line) 1px,transparent 1px) 0 0/100% 15px}
-#ecgp{fill:none;stroke-width:2;stroke-linejoin:round;animation:ecgm 1s linear infinite}
-@media (prefers-reduced-motion:reduce){.part,.tile,.panel,.sec.on,.log li,#ecgp,#emg.on,.pill i,.scan,svg.ch polyline{animation:none!important}svg.ch polyline{stroke-dasharray:none!important}}
-@media (prefers-reduced-motion:reduce){.part.red *{animation:none;fill:var(--bad)}.part.yel *{animation:none;fill:var(--yel)}}
-.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
-.crit .dot,.dot.crit{background:var(--bad)}.warn .dot,.dot.warn{background:var(--warn)}.dot.ok{background:var(--ok)}.dot.info{background:var(--mut)}.hi{font-size:.75rem;border:1px solid var(--warn);color:var(--warn);border-radius:99px;padding:0 8px;margin-left:6px;white-space:nowrap}
-.log{list-style:none;margin:0;padding:0}.log li{padding:6px 0;border-top:1px solid var(--line);font-size:.9rem}
-.log small{color:var(--mut)}
-.zc{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}.ev{display:inline-flex;align-items:center;gap:6px}.ev.ok{color:var(--ok)}.ev.warn{color:var(--warn)}.ev.crit{color:var(--bad)}.ev b{color:var(--ink)}
-.sec{display:none}.sec.on{display:block}
-.two{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
-.charts{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
-svg.ch{width:100%;height:auto}
-#emg{display:none;border:2px solid var(--bad);background:var(--panel);margin-bottom:14px}
-#emg.on{display:block}
-.row{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
-input[type=range]{width:100%}
-details{border-top:1px solid var(--line);padding:8px 0}summary{cursor:pointer;font-weight:600}
-.mut{color:var(--mut);font-size:.85rem}
-#res{margin-top:12px;display:none}#res.on{display:block}
-img.pv{max-width:140px;border-radius:6px;margin-top:8px;display:block}
+:root {
+  --bg: #070d18;
+  --bg-pattern: 
+    radial-gradient(circle at 50% -20%, rgba(14, 116, 244, 0.16), transparent 70%),
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  --panel: rgba(13, 23, 40, 0.85);
+  --panel-solid: #0d1728;
+  --ink: #f1f5f9;
+  --mut: #8ca0b8;
+  --line: rgba(70, 120, 190, 0.22);
+  --line-strong: rgba(0, 180, 216, 0.45);
+  --acc: #00b4d8;
+  --acc-glow: rgba(0, 180, 216, 0.25);
+  --acc-grad: linear-gradient(135deg, #0284c7, #00b4d8);
+  --ok: #10b981;
+  --ok-bg: rgba(16, 185, 129, 0.12);
+  --warn: #f59e0b;
+  --warn-bg: rgba(245, 158, 11, 0.12);
+  --bad: #ef4444;
+  --bad-bg: rgba(239, 68, 68, 0.14);
+  --sil: rgba(19, 32, 54, 0.7);
+  --yel: #fbbf24;
+  --shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f3f6fa;
+    --bg-pattern: 
+      radial-gradient(circle at 50% -20%, rgba(2, 132, 199, 0.08), transparent 70%),
+      linear-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+    --panel: rgba(255, 255, 255, 0.94);
+    --panel-solid: #ffffff;
+    --ink: #0f172a;
+    --mut: #54667d;
+    --line: #d8e2ec;
+    --line-strong: #90b8dc;
+    --acc: #0284c7;
+    --acc-glow: rgba(2, 132, 199, 0.2);
+    --acc-grad: linear-gradient(135deg, #0369a1, #0284c7);
+    --ok: #059669;
+    --ok-bg: rgba(5, 150, 105, 0.08);
+    --warn: #d97706;
+    --warn-bg: rgba(217, 119, 6, 0.08);
+    --bad: #dc2626;
+    --bad-bg: rgba(220, 38, 38, 0.08);
+    --sil: #eef3f8;
+    --yel: #d97706;
+    --shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+    color-scheme: light;
+  }
+}
+
+:root[data-theme="light"] {
+  --bg: #f3f6fa;
+  --bg-pattern: 
+    radial-gradient(circle at 50% -20%, rgba(2, 132, 199, 0.08), transparent 70%),
+    linear-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+  --panel: rgba(255, 255, 255, 0.94);
+  --panel-solid: #ffffff;
+  --ink: #0f172a;
+  --mut: #54667d;
+  --line: #d8e2ec;
+  --line-strong: #90b8dc;
+  --acc: #0284c7;
+  --acc-glow: rgba(2, 132, 199, 0.2);
+  --acc-grad: linear-gradient(135deg, #0369a1, #0284c7);
+  --ok: #059669;
+  --ok-bg: rgba(5, 150, 105, 0.08);
+  --warn: #d97706;
+  --warn-bg: rgba(217, 119, 6, 0.08);
+  --bad: #dc2626;
+  --bad-bg: rgba(220, 38, 38, 0.08);
+  --sil: #eef3f8;
+  --yel: #d97706;
+  --shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #070d18;
+  --bg-pattern: 
+    radial-gradient(circle at 50% -20%, rgba(14, 116, 244, 0.16), transparent 70%),
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  --panel: rgba(13, 23, 40, 0.85);
+  --panel-solid: #0d1728;
+  --ink: #f1f5f9;
+  --mut: #8ca0b8;
+  --line: rgba(70, 120, 190, 0.22);
+  --line-strong: rgba(0, 180, 216, 0.45);
+  --acc: #00b4d8;
+  --acc-glow: rgba(0, 180, 216, 0.25);
+  --acc-grad: linear-gradient(135deg, #0284c7, #00b4d8);
+  --ok: #10b981;
+  --ok-bg: rgba(16, 185, 129, 0.12);
+  --warn: #f59e0b;
+  --warn-bg: rgba(245, 158, 11, 0.12);
+  --bad: #ef4444;
+  --bad-bg: rgba(239, 68, 68, 0.14);
+  --sil: rgba(19, 32, 54, 0.7);
+  --yel: #fbbf24;
+  --shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  color-scheme: dark;
+}
+
+:root[data-mode="sleep"] {
+  --bg: #080304;
+  --bg-pattern: 
+    radial-gradient(circle at 50% -20%, rgba(200, 70, 50, 0.15), transparent 70%),
+    linear-gradient(rgba(255, 80, 60, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 80, 60, 0.015) 1px, transparent 1px);
+  --panel: rgba(20, 9, 10, 0.9);
+  --panel-solid: #15090a;
+  --ink: #e2947d;
+  --mut: #945f4f;
+  --line: rgba(180, 60, 45, 0.26);
+  --line-strong: rgba(220, 80, 60, 0.45);
+  --acc: #c04d33;
+  --acc-glow: rgba(192, 77, 51, 0.25);
+  --acc-grad: linear-gradient(135deg, #993320, #c04d33);
+  --ok: #ab7f32;
+  --ok-bg: rgba(171, 127, 50, 0.12);
+  --warn: #be8426;
+  --warn-bg: rgba(190, 132, 38, 0.12);
+  --bad: #d93d3d;
+  --bad-bg: rgba(217, 61, 61, 0.14);
+  --sil: #221013;
+  --yel: #be8426;
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.65);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+body {
+  margin: 0;
+  background: var(--bg);
+  background-image: var(--bg-pattern);
+  background-size: 100% 100%, 32px 32px, 32px 32px;
+  background-attachment: fixed;
+  color: var(--ink);
+  font: 14.5px/1.55 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  background: var(--panel-solid);
+  z-index: 100;
+}
+#dim {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 90;
+  transition: opacity 2.5s ease;
+}
+:root[data-mode="sleep"] #dim { opacity: var(--dimv, .45); }
+:root[data-mode="sleep"] .scan { display: none; }
+body, .panel, header, .tile, input, select, textarea, button {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+h1, h2, h3 {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+h1 { font-size: 1.25rem; }
+h2 {
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 0.8rem;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+h3 { font-size: 0.9rem; font-weight: 600; }
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  position: relative;
+}
+.wrap {
+  max-width: 1220px;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+}
+
+header {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 80;
+  background: var(--panel);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+.hrow {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 12px 18px 8px;
+  max-width: 1220px;
+  margin: 0 auto;
+}
+.nasa-badge {
+  background: #0b3d91;
+  color: #ffffff;
+  font-weight: 900;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(11, 61, 145, 0.4);
+}
+.sub-brand {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--mut);
+  text-transform: uppercase;
+  display: block;
+}
+.chip {
+  font-size: 0.76rem;
+  font-weight: 600;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 10px;
+  color: var(--ink);
+  background: var(--sil);
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-weight: 600;
+  background: var(--sil);
+  letter-spacing: 0.02em;
+}
+.pill i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  color: var(--ok);
+  animation: ping 1.8s infinite;
+}
+.pill.warn i { color: var(--warn); }
+.pill.crit i { color: var(--bad); }
+
+nav {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 6px 18px 10px;
+  max-width: 1220px;
+  margin: 0 auto;
+  scrollbar-width: thin;
+}
+nav::-webkit-scrollbar { height: 4px; }
+nav::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+nav button {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--mut);
+  white-space: nowrap;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+nav button:hover {
+  color: var(--ink);
+  background: var(--sil);
+}
+nav button.on {
+  background: var(--sil);
+  color: var(--acc);
+  border-color: var(--line-strong);
+  font-weight: 700;
+  box-shadow: 0 0 12px var(--acc-glow);
+}
+.badge {
+  background: var(--bad);
+  color: #fff;
+  border-radius: 99px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  margin-left: 6px;
+}
+
+button {
+  cursor: pointer;
+  border: 1px solid var(--line);
+  background: var(--sil);
+  color: var(--ink);
+  padding: 7px 15px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.86rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+button:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.18);
+}
+button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+button.pri {
+  background: var(--acc-grad);
+  border-color: var(--acc);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 10px var(--acc-glow);
+}
+button.pri:hover {
+  box-shadow: 0 4px 18px var(--acc-glow);
+}
+:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+}
+
+label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--mut);
+  margin: 12px 0 4px;
+}
+input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+input[type=text], input[type=number], select, textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--sil);
+  color: var(--ink);
+  font-size: 0.92rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--acc);
+  box-shadow: 0 0 0 3px var(--acc-glow);
+  background: var(--panel-solid);
+}
+input[type=range] {
+  width: 100%;
+  accent-color: var(--acc);
+  cursor: pointer;
+  height: 6px;
+  border-radius: 99px;
+}
+
+.grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(260px, 340px) 1fr;
+}
+@media (max-width: 820px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+.tiles {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(136px, 1fr));
+}
+.tile {
+  background: var(--sil);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--ok);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  position: relative;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.tile:hover {
+  transform: translateY(-2px);
+  border-color: var(--line-strong);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+.tile.warn { border-left-color: var(--warn); }
+.tile.crit { border-left-color: var(--bad); }
+.tile b {
+  font-size: 1.65rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  display: block;
+  margin: 2px 0;
+  color: var(--ink);
+}
+.tile span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mut);
+}
+
+.ecg {
+  width: 100%;
+  height: 64px;
+  margin-bottom: 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: 
+    linear-gradient(rgba(0, 180, 216, 0.08) 1px, transparent 1px) 0 0 / 16px 16px,
+    linear-gradient(90deg, rgba(0, 180, 216, 0.08) 1px, transparent 1px) 0 0 / 16px 16px,
+    var(--sil);
+}
+#ecgp {
+  fill: none;
+  stroke-width: 2.2;
+  stroke-linejoin: round;
+  animation: ecgm 1s linear infinite;
+}
+
+.scanner-frame {
+  position: relative;
+  padding: 12px;
+  border: 1px solid rgba(0, 210, 255, 0.25);
+  border-radius: var(--radius-md);
+  background: radial-gradient(circle at 50% 40%, rgba(0, 180, 255, 0.08) 0%, rgba(13, 19, 31, 0.6) 80%);
+  box-shadow: inset 0 0 30px rgba(0, 210, 255, 0.05);
+}
+
+.part {
+  cursor: pointer;
+  outline: none;
+}
+.part .zone, .part path, .part ellipse {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 1.5;
+  transition: fill 0.25s ease, stroke 0.25s ease, filter 0.25s ease;
+}
+.part .hud-reticle {
+  stroke: var(--acc);
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.part:hover .hud-reticle, .part:focus-visible .hud-reticle {
+  opacity: 0.85;
+}
+.part:hover .zone, .part:hover path, .part:hover ellipse,
+.part:focus-visible .zone, .part:focus-visible path, .part:focus-visible ellipse {
+  fill: rgba(0, 210, 255, 0.2);
+  stroke: var(--acc);
+  stroke-width: 2;
+  filter: drop-shadow(0 0 10px rgba(0, 210, 255, 0.8));
+}
+.part.sel .zone, .part.sel path, .part.sel ellipse {
+  fill: rgba(0, 210, 255, 0.32);
+  stroke: var(--acc);
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 14px var(--acc));
+}
+.part.yel .zone, .part.yel path, .part.yel ellipse {
+  fill: rgba(245, 158, 11, 0.26);
+  stroke: var(--yel);
+  stroke-width: 2;
+  animation: bl-yel 1.4s infinite;
+  filter: drop-shadow(0 0 12px var(--yel));
+}
+.part.red .zone, .part.red path, .part.red ellipse {
+  fill: rgba(239, 68, 68, 0.36);
+  stroke: var(--bad);
+  stroke-width: 2.5;
+  animation: bl-red 1s infinite;
+  filter: drop-shadow(0 0 16px var(--bad));
+}
+
+@keyframes bl-yel {
+  0%, 100% { fill: rgba(245, 158, 11, 0.4); stroke: var(--yel); }
+  50% { fill: rgba(245, 158, 11, 0.08); stroke: rgba(245, 158, 11, 0.3); }
+}
+@keyframes bl-red {
+  0%, 100% { fill: rgba(239, 68, 68, 0.5); stroke: var(--bad); }
+  50% { fill: rgba(239, 68, 68, 0.12); stroke: rgba(239, 68, 68, 0.4); }
+}
+@keyframes beat {
+  0%, 100% { transform: scale(1); }
+  12% { transform: scale(1.15); }
+  24% { transform: scale(1); }
+  36% { transform: scale(1.08); }
+  50% { transform: scale(1); }
+}
+@keyframes br {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+@keyframes up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes ecgm {
+  to { transform: translateX(-80px); }
+}
+@keyframes ping {
+  0% { box-shadow: 0 0 0 0 currentColor; }
+  100% { box-shadow: 0 0 0 8px transparent; }
+}
+@keyframes scan {
+  0% { transform: translateY(0); opacity: 0; }
+  10%, 90% { opacity: 0.9; }
+  100% { transform: translateY(530px); opacity: 0; }
+}
+@keyframes sh {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 24px 2px var(--bad); }
+}
+
+.part[data-p=heart] {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: beat calc(60s / var(--bpm, 70)) ease-in-out infinite;
+}
+.part[data-p=heart] .heart-pulse-aura {
+  opacity: 0.6;
+  animation: heart-glow calc(60s / var(--bpm, 70)) ease-in-out infinite;
+}
+@keyframes heart-glow {
+  0%, 100% { transform: scale(0.9); opacity: 0.3; }
+  15% { transform: scale(1.3); opacity: 0.85; }
+  30% { transform: scale(1.0); opacity: 0.4; }
+  45% { transform: scale(1.15); opacity: 0.7; }
+  60% { transform: scale(0.9); opacity: 0.3; }
+}
+.part[data-p=lungs] {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: br 4.5s ease-in-out infinite;
+}
+.scan {
+  animation: scan 4.5s ease-in-out infinite;
+  pointer-events: none;
+  filter: drop-shadow(0 0 8px var(--acc));
+}
+.sec.on { animation: up 0.35s ease both; }
+.panel, .tile { animation: up 0.4s ease both; }
+.log li { animation: up 0.25s ease both; }
+#emg.on { animation: sh 1.4s infinite; }
+
+#emg {
+  display: none;
+  border: 1px solid var(--bad);
+  background: var(--bad-bg);
+  backdrop-filter: blur(14px);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+}
+
+.dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.crit .dot, .dot.crit { background: var(--bad); box-shadow: 0 0 6px var(--bad); }
+.warn .dot, .dot.warn { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
+.dot.ok { background: var(--ok); box-shadow: 0 0 6px var(--ok); }
+.dot.info { background: var(--mut); }
+.hi {
+  font-size: 0.72rem;
+  font-weight: 700;
+  border: 1px solid var(--warn);
+  color: var(--warn);
+  border-radius: 99px;
+  padding: 1px 8px;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+.log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.log li {
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+.log small { color: var(--mut); }
+.zc {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+.ev {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+.ev.ok { color: var(--ok); }
+.ev.warn { color: var(--warn); }
+.ev.crit { color: var(--bad); }
+.ev b { color: var(--ink); }
+.sec { display: none; }
+.sec.on { display: block; }
+.two {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+}
+.charts {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+svg.ch { width: 100%; height: auto; }
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+details {
+  border-top: 1px solid var(--line);
+  padding: 10px 0;
+}
+summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--ink);
+}
+.mut {
+  color: var(--mut);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+#res {
+  margin-top: 14px;
+  display: none;
+}
+#res.on { display: block; }
+img.pv {
+  max-width: 160px;
+  border-radius: var(--radius-sm);
+  margin-top: 8px;
+  display: block;
+  border: 1px solid var(--line);
+}
+
+#astCanvas {
+  width: 100%;
+  max-width: 640px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: #020408;
+  display: block;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(0, 180, 216, 0.1);
+}
+#memGrid > div {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  background: var(--sil);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  user-select: none;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+#memGrid > div:hover {
+  transform: scale(1.04);
+  border-color: var(--line-strong);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .part, .tile, .panel, .sec.on, .log li, #ecgp, #emg.on, .pill i, .scan, svg.ch polyline {
+    animation: none !important;
+  }
+  svg.ch polyline { stroke-dasharray: none !important; }
+  .part.red .zone, .part.red path, .part.red ellipse { animation: none; fill: rgba(239, 68, 68, 0.4); stroke: var(--bad); }
+  .part.yel .zone, .part.yel path, .part.yel ellipse { animation: none; fill: rgba(245, 158, 11, 0.3); stroke: var(--yel); }
+}
 </style></head><body>
 
-<div id="dim"></div><div id="login" class="wrap" style="max-width:480px;margin-top:6vh">
+<div id="dim"></div><div id="login" class="wrap" style="max-width:500px;margin-top:5vh">
 <div class="panel">
-<h1>Crew Health Console</h1>
-<button class="thm" style="float:right"></button><p class="mut">Sign in so the console uses your personal profile. Your blood type, sex and genetic notes shape how readings and symptoms are interpreted.</p>
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+  <div>
+    <span class="nasa-badge">NASA</span>
+    <h1 style="font-size:1.35rem;margin-top:6px">Crew Health Console</h1>
+    <span class="sub-brand">ASTRONAUT BIOMETRIC INITIALIZATION</span>
+  </div>
+  <button class="thm"></button>
+</div>
+<p class="mut">Sign in so the console uses your personal profile. Your blood type, sex and genetic notes shape how readings and symptoms are interpreted.</p>
 <label for="lName">Full name</label><input type="text" id="lName" placeholder="e.g. Cdr. A. Rahman">
 <label for="lBlood">Blood type</label><select id="lBlood"><option>O+</option><option>O−</option><option>A+</option><option>A−</option><option>B+</option><option>B−</option><option>AB+</option><option>AB−</option></select>
 <label for="lSex">Sex</label><select id="lSex"><option>Female</option><option>Male</option><option>Other</option></select>
 <label for="lGene">Genetic notes</label><input type="text" id="lGene" placeholder="e.g. sickle cell trait, family history of heart disease">
 <label for="lEnv">Current location</label><select id="lEnv"><option>International Space Station</option><option>Spacecraft in transit</option><option>Lunar base</option><option>Mars base</option><option>Lunar rover</option><option>Mars rover</option></select>
-<p><button class="pri" id="go" style="width:100%;margin-top:14px">Start session</button></p>
-<p class="mut">A 12-day sample history is loaded so the charts have something to show.</p>
+<label for="lSanctuary">Earth Sanctuary (Personal VR Happy Place)</label><select id="lSanctuary"><option value="forest">Pine Forest & Mountain Trail</option><option value="lake">Alpine Lake at Sunrise</option><option value="ocean">Pacific Ocean Coastline</option><option value="meadow">Autumn Highland Meadow</option></select>
+<p><button class="pri" id="go" style="width:100%;margin-top:16px;padding:12px;font-size:0.95rem">Start session</button></p>
+<p class="mut" style="text-align:center;font-size:0.8rem">12-day flight telemetry history is preloaded.</p>
 </div></div>
 
 <div id="app" hidden>
-<header><div class="hrow"><h1 style="font-size:1.1rem">Crew Health Console</h1><span class="chip" id="cName"></span><span class="chip" id="cBlood"></span><span class="chip" id="cEnv"></span><span class="pill" id="sysP"><i></i><span id="sysT"></span></span><span class="pill"><i></i><span id="clkT">UTC</span></span>
-<span style="flex:1"></span><button class="thm"></button><button id="hdrSlp"></button><button id="out">Sign out</button></div>
-<nav id="nav"><button data-t="dash" class="on">Dashboard</button><button data-t="check">Daily check-in</button><button data-t="vit">Measurements</button><button data-t="sym">Report a problem</button><button data-t="tr">Trends</button><button data-t="rt">Routine<span class="badge" id="due"></span></button><button data-t="hz">NASA risks</button><button data-t="en">Environment</button><button data-t="ast">Motor Test</button><button data-t="mem">Memory Test</button></nav></header>
+<header><div class="hrow">
+<div style="display:flex;align-items:center;gap:10px">
+  <span class="nasa-badge">NASA</span>
+  <div>
+    <h1 style="font-size:1.05rem;line-height:1.2;margin:0">Crew Health Console</h1>
+    <span class="sub-brand">ORION FLIGHT SURGEON TELEMETRY</span>
+  </div>
+</div>
+<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+  <span class="chip" id="cName"></span>
+  <span class="chip" id="cBlood"></span>
+  <span class="chip" id="cEnv"></span>
+  <span class="pill" id="sysP"><i></i><span id="sysT"></span></span>
+  <span class="pill" id="clkT">UTC</span>
+</div>
+<span style="flex:1"></span>
+<div style="display:flex;gap:8px;align-items:center">
+  <button class="thm"></button>
+  <button id="hdrSlp"></button>
+  <button id="out">Sign out</button>
+</div>
+</div>
+<nav id="nav"><button data-t="dash" class="on">Dashboard & Trends</button><button data-t="daily">Daily Clinical Protocol<span class="badge" id="due"></span></button><button data-t="sym">Clinical Triage</button><button data-t="tests">Cognitive & Motor Tests</button><button data-t="vr">VR Earth Sanctuary</button><button data-t="hz">NASA Risk Watch</button><button data-t="en">Ship & Suit Sensors</button></nav></header>
 
 <main class="wrap">
 <div id="emg" class="panel"><h2 style="color:var(--bad)">Emergency alert sent</h2><p id="emgTxt"></p><ul class="log" id="emgList"></ul><button id="emgX">Dismiss</button></div>
 
-<section id="t-dash" class="sec on"><div class="grid">
-<div class="panel"><h2>Body map</h2>
-<svg viewBox="0 0 200 400" width="100%" role="img" id="fig" aria-label="Clickable human body figure" style="max-height:520px">
-<path class="body" d="M91 60 L91 74 C78 77 60 80 54 88 C50 96 52 110 56 130 C58 150 62 175 66 196 C64 208 62 220 66 232 L134 232 C138 220 136 208 134 196 C138 175 142 150 144 130 C148 110 150 96 146 88 C140 80 122 77 109 74 L109 60Z"/>
-<ellipse class="body" cx="100" cy="34" rx="22" ry="28"/><path class="ln" d="M92 50 h.1 M108 50 h.1 M94 58 Q100 61 106 58 M100 48 v4 M91 76 C80 80 70 82 62 86 M109 76 C120 80 130 82 138 86"/>
-<g class="part" data-p="brain" tabindex="0"><path d="M82 30 C80 16 91 9 100 11 C109 9 120 16 118 30 C119 38 111 43 100 43 C89 43 81 38 82 30Z"/><path class="ln" d="M100 12 L100 42 M88 20 C92 25 96 22 100 27 M112 20 C108 25 104 22 100 27 M86 32 C92 36 96 33 100 37 M114 32 C108 36 104 33 100 37"/></g>
-<g class="part" data-p="lungs" tabindex="0"><path d="M90 94 C80 90 68 98 66 118 C64 140 68 158 80 160 C88 160 92 152 92 138 L92 104Z"/><path d="M110 94 C120 90 132 98 134 118 C136 140 132 158 120 160 C112 160 108 152 108 138 L108 104Z"/><path class="ln" d="M100 74 L100 100 L92 108 M100 100 L108 108"/></g>
-<g class="part" data-p="heart" tabindex="0"><path d="M97 112 C97 105 107 104 109 111 C111 118 112 130 105 146 C97 138 90 126 92 117 C93 112 96 110 97 112Z"/></g>
-<g class="part" data-p="abdomen" tabindex="0"><path d="M74 164 C86 160 114 160 126 164 C132 182 130 202 118 211 C108 216 92 216 82 211 C70 202 68 182 74 164Z"/><path class="ln" d="M80 180 C90 190 110 190 120 180 M98 198 a2 2 0 1 0 4 0 a2 2 0 1 0 -4 0"/></g>
-<g class="part" data-p="arms" tabindex="0"><path d="M54 86 C44 88 38 96 36 110 C33 130 31 152 30 172 L42 175 C46 155 50 135 56 118 C58 108 58 96 54 86Z"/><path d="M146 86 C156 88 162 96 164 110 C167 130 169 152 170 172 L158 175 C154 155 150 135 144 118 C142 108 142 96 146 86Z"/></g>
-<g class="part" data-p="hands" tabindex="0"><path d="M30 172 L42 175 C46 186 46 196 42 204 C40 208 35 208 33 204 C30 196 28 184 30 172Z"/><path d="M170 172 L158 175 C154 186 154 196 158 204 C160 208 165 208 167 204 C170 196 172 184 170 172Z"/><path class="ln" d="M34 192 L33 203 M38 192 L38 205 M42 192 L41 203 M166 192 L167 203 M162 192 L162 205 M158 192 L159 203"/></g>
-<g class="part" data-p="legs" tabindex="0"><path d="M66 230 C62 262 64 292 72 314 C70 330 70 346 72 362 L90 362 C92 346 92 330 90 314 C98 292 98 262 98 236Z"/><path d="M72 362 L90 362 C92 372 94 380 94 386 L66 386 C66 380 68 376 72 372Z"/><path d="M134 230 C138 262 136 292 128 314 C130 330 130 346 128 362 L110 362 C108 346 108 330 110 314 C102 292 102 262 102 236Z"/><path d="M128 362 L110 362 C108 372 106 380 106 386 L134 386 C134 380 132 376 128 372Z"/><path class="ln" d="M74 316 C80 320 88 320 92 316 M126 316 C120 320 112 320 108 316"/></g>
-<rect class="scan" x="24" y="6" width="152" height="3" rx="2" fill="var(--acc)"/>
-</svg>
-<p class="mut"><span class="dot" style="background:var(--bad)"></span>Red glow: dangerous, act now &nbsp; <span class="dot" style="background:var(--yel)"></span>Yellow glow: needs attention. No glow means no problems; click any part to see what can go wrong there.</p></div>
-<div style="display:grid;gap:14px;align-content:start">
-<div class="panel"><h2>Latest readings <span class="pill"><i></i>Live</span></h2><svg class="ecg" viewBox="0 0 400 60" preserveAspectRatio="none" role="img" aria-label="Animated heart rhythm"><path id="ecgp"/></svg><div class="tiles" id="tiles"></div></div>
-<div class="panel" id="partBox"><h2>Select a body part</h2><p class="mut">Press the brain, heart, lungs, abdomen, arms, hands or legs to see what can go wrong there during spaceflight.</p></div>
-<div class="panel"><h2>Health record and alerts</h2><ul class="log" id="log"></ul></div>
-</div></div></section>
+<section id="t-dash" class="sec on">
+  <div class="grid">
+    <div class="panel"><h2>Biometric Body Map</h2>
+      <div class="scanner-frame">
+        <svg viewBox="0 0 459 612" width="100%" role="img" id="fig" aria-label="Clickable human body figure" style="max-height:560px;display:block;margin:0 auto">
+          <defs>
+            <radialGradient id="heartPulseGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#ff3b5c" stop-opacity="0.6"/>
+              <stop offset="60%" stop-color="#ff3b5c" stop-opacity="0.2"/>
+              <stop offset="100%" stop-color="#ff3b5c" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
 
-<section id="t-check" class="sec"><div class="panel" style="max-width:640px"><h2>Daily check-in</h2>
-<p class="mut">Answer for the last 24 hours. Takes about a minute.</p>
-<label>Mood: <b id="oMood">3</b> / 5 (1 very low, 5 great)</label><input type="range" id="mood" min="1" max="5" value="3">
-<label>Anxiety or stress: <b id="oAnx">2</b> / 5</label><input type="range" id="anx" min="1" max="5" value="2">
-<label for="sleep">Sleep last night (hours)</label><input type="number" id="sleep" step="0.5" min="0" max="14" value="7">
-<label for="water">Water drunk (litres)</label><input type="number" id="water" step="0.25" min="0" max="8" value="2.5">
-<label for="meals">Meals eaten</label><input type="number" id="meals" min="0" max="6" value="3">
-<label for="ex">Exercise (minutes)</label><input type="number" id="ex" min="0" max="300" value="60">
-<label>Check any that apply</label>
-<div><label style="color:inherit"><input type="checkbox" class="cb"> Feeling isolated or withdrawn</label><label style="color:inherit"><input type="checkbox" class="cb"> Irritable with crew</label><label style="color:inherit"><input type="checkbox" class="cb"> Trouble concentrating</label><label style="color:inherit"><input type="checkbox" class="cb"> Low appetite</label></div>
-<p><button class="pri" id="subC">Save check-in</button></p><ul class="log" id="resC"></ul></div></section>
+          <!-- Holographic Telemetry HUD Grid & Calibration Reticles -->
+          <g class="hud-bg" opacity="0.25" stroke="var(--acc)" stroke-width="0.8" fill="none">
+            <circle cx="231" cy="165" r="75" stroke-dasharray="3 6"/>
+            <circle cx="231" cy="165" r="115" stroke-dasharray="2 8"/>
+            <line x1="231" y1="24" x2="231" y2="590" stroke-dasharray="2 6" opacity="0.4"/>
+            <line x1="60" y1="165" x2="400" y2="165" stroke-dasharray="2 6" opacity="0.4"/>
+            <path d="M70 50 L50 50 L50 70 M390 50 L410 50 L410 70 M50 540 L50 560 L70 560 M410 540 L410 560 L390 560"/>
+          </g>
 
-<section id="t-vit" class="sec"><div class="panel" style="max-width:640px"><h2>Enter measurements</h2>
-<p class="mut">Type values from the cuff, pulse oximeter, glucometer and thermometer. Instructions are under Routine.</p>
-<div class="two"><div><label for="hr">Heart rate (bpm)</label><input type="number" id="hr" value="70"></div><div><label for="spo2">Blood oxygen SpO₂ (%)</label><input type="number" id="spo2" value="97"></div>
-<div><label for="sys">Blood pressure, systolic (mmHg)</label><input type="number" id="sys" value="118"></div><div><label for="dia">Blood pressure, diastolic (mmHg)</label><input type="number" id="dia" value="76"></div>
-<div><label for="glu">Blood sugar (mg/dL)</label><input type="number" id="glu" value="92"></div><div><label for="temp">Body temperature (°C)</label><input type="number" id="temp" step="0.1" value="36.8"></div></div>
-<p><button class="pri" id="subV">Save measurements</button></p><ul class="log" id="resV"></ul></div>
-<div class="panel" style="max-width:640px;margin-top:14px"><h2>Standard ranges: <span id="refE"></span></h2><div id="ref"></div></div></section>
+          <!-- High-Fidelity 3D Anatomical Digital Twin Reference Figure -->
+          <image href="human_figure.png" x="0" y="0" width="459" height="612" preserveAspectRatio="xMidYMid meet"/>
 
-<section id="t-sym" class="sec"><div class="two"><div class="panel"><h2>Report a problem</h2>
-<label for="sBody">Body part (optional)</label><select id="sBody"><option value="">Not sure</option><option value="brain">Head / brain</option><option value="heart">Heart</option><option value="lungs">Lungs</option><option value="abdomen">Abdomen</option><option value="arms">Arms</option><option value="hands">Hands</option><option value="legs">Legs</option></select>
-<label for="sTxt">Describe what you feel</label><textarea id="sTxt" rows="4" placeholder="e.g. dull headache for two days and blurry vision"></textarea>
-<label>Severity: <b id="oSev">3</b> / 5</label><input type="range" id="sev" min="1" max="5" value="3">
-<label for="sImg">Photo (optional)</label><input type="file" id="sImg" accept="image/*"><img id="pv" class="pv" alt="" hidden>
-<p><button class="pri" id="subS">Analyze</button></p></div>
-<div class="panel" id="res"></div></div></section>
+          <!-- Interactive Anatomical Hotspots -->
+          <!-- 1. Brain & Cranial Nervous System -->
+          <g class="part" data-p="brain" tabindex="0" role="button" aria-label="Brain and nervous system">
+            <ellipse class="zone" cx="229" cy="74" rx="22" ry="31"/>
+            <circle class="hud-reticle" cx="229" cy="74" r="16" fill="none"/>
+          </g>
 
-<section id="t-tr" class="sec"><div class="charts" id="charts"></div><p class="mut">Shaded band marks the expected range. Sample history is shown until you add your own entries.</p></section>
+          <!-- 2. Lungs & Respiratory Tract -->
+          <g class="part" data-p="lungs" tabindex="0" role="button" aria-label="Lungs and respiratory system">
+            <path class="zone" d="M218 126 C202 128 186 142 184 165 C182 184 190 197 204 197 C215 197 218 188 218 174 Z"/>
+            <path class="zone" d="M241 126 C257 128 273 142 275 165 C277 184 269 197 255 197 C244 197 241 188 241 174 Z"/>
+          </g>
 
-<section id="t-rt" class="sec"><div class="two"><div class="panel"><h2>Today’s routine</h2><div id="tasks"></div></div>
-<div class="panel"><h2>How to measure</h2>
-<details><summary>Blood pressure</summary><p class="mut">Sit still for 5 minutes. Cuff at heart level on the upper arm. Stay quiet, take two readings a minute apart and enter the second.</p></details>
-<details><summary>Heart rate and SpO₂</summary><p class="mut">Clip the oximeter on a warm fingertip. Hold your hand still and wait 30 seconds until the number stops changing.</p></details>
-<details><summary>Blood sugar</summary><p class="mut">Wash hands, use a fresh lancet on the side of a fingertip, apply the drop to the strip. Note if you measured fasting.</p></details>
-<details><summary>Temperature</summary><p class="mut">Use the ear or forehead thermometer, away from vents and after at least 15 minutes without exercise.</p></details>
-<details><summary>Exercise plan</summary><p class="mut">Aim for about 2 hours a day, 6 days a week: resistive training (bones and muscle), treadmill (heart and legs), cycle ergometer (cardio). Add core and back work to protect the spine.</p></details>
-<p class="mut">General guidance for this prototype. Follow your flight surgeon’s protocol.</p></div></div></section>
-<section id="t-en" class="sec"><div class="panel"><h2>Ship and suit sensors <span class="pill"><i></i>Live</span></h2><p class="mut">Simulated feeds from sensors across the vehicle and on your suit, updated every 3 seconds. Alerts for the place you are in flag your lungs on the body map. A dangerous reading anywhere notifies the crew team.</p><label for="enLoc">You are in</label><select id="enLoc"></select><p class="mut" style="margin-top:12px">Try a test event:</p><div id="enEv" style="display:flex;gap:8px;flex-wrap:wrap"></div></div><div class="charts" id="enZ" style="margin-top:14px"></div></section>
+          <!-- 3. Heart & Central Cardiovascular Dynamics -->
+          <g class="part" data-p="heart" tabindex="0" role="button" aria-label="Heart and cardiovascular system">
+            <ellipse class="zone" cx="231" cy="165" rx="16" ry="17"/>
+            <circle class="heart-pulse-aura" cx="231" cy="165" r="24" fill="url(#heartPulseGlow)"/>
+          </g>
+
+          <!-- 4. Abdomen & Digestion -->
+          <g class="part" data-p="abdomen" tabindex="0" role="button" aria-label="Abdomen and digestive system">
+            <path class="zone" d="M198 202 C210 198 248 198 260 202 C268 225 266 265 258 290 C248 304 210 304 200 290 C192 265 190 225 198 202 Z"/>
+          </g>
+
+          <!-- 5. Arms & Upper Musculoskeletal -->
+          <g class="part" data-p="arms" tabindex="0" role="button" aria-label="Arms and shoulders">
+            <path class="zone" d="M185 125 C162 135 145 158 134 195 C125 228 116 260 114 290 L128 294 C132 265 140 235 148 202 C158 168 174 148 192 138 Z"/>
+            <path class="zone" d="M273 125 C296 135 313 158 324 195 C333 228 342 260 344 290 L330 294 C326 265 318 235 310 202 C300 168 284 148 266 138 Z"/>
+          </g>
+
+          <!-- 6. Hands & Fine Motor Dexterity -->
+          <g class="part" data-p="hands" tabindex="0" role="button" aria-label="Hands and fingers">
+            <path class="zone" d="M114 290 C108 305 100 325 94 345 C98 355 106 352 112 340 C116 348 122 348 125 338 C128 344 133 342 134 330 C136 320 132 305 128 294 Z"/>
+            <path class="zone" d="M344 290 C350 305 358 325 364 345 C360 355 352 352 346 340 C342 348 336 348 333 338 C330 344 325 342 324 330 C322 320 326 305 330 294 Z"/>
+          </g>
+
+          <!-- 7. Legs & Lower Skeleton -->
+          <g class="part" data-p="legs" tabindex="0" role="button" aria-label="Legs and spine">
+            <path class="zone" d="M198 305 C188 350 186 400 184 450 C182 485 178 525 174 565 L165 580 L200 580 L202 560 C206 520 212 475 215 435 C218 395 222 350 225 305 Z"/>
+            <path class="zone" d="M260 305 C270 350 272 400 274 450 C276 485 280 525 284 565 L293 580 L258 580 L256 560 C252 520 246 475 243 435 C240 395 236 350 233 305 Z"/>
+          </g>
+
+          <!-- Sweeping Diagnostic Telemetry Laser Line -->
+          <line class="scan" x1="60" y1="40" x2="400" y2="40" stroke="var(--acc)" stroke-width="2.5" opacity="0.85"/>
+        </svg>
+      </div>
+      <p class="mut" style="margin-top:12px"><span class="dot" style="background:var(--bad)"></span>Red glow: dangerous &nbsp; <span class="dot" style="background:var(--yel)"></span>Yellow glow: needs attention &nbsp; <span class="dot" style="background:var(--ok)"></span>No glow: nominal. Select any zone to view spaceflight pathologies.</p>
+    </div>
+
+    <div style="display:grid;gap:14px;align-content:start">
+      <div class="panel"><h2>Latest readings <span class="pill"><i></i>Live</span></h2><svg class="ecg" viewBox="0 0 400 60" preserveAspectRatio="none" role="img" aria-label="Animated heart rhythm"><path id="ecgp"/></svg><div class="tiles" id="tiles"></div></div>
+      <div class="panel" id="partBox"><h2>Select a body part</h2><p class="mut">Press the brain, heart, lungs, abdomen, arms, hands or legs to see what can go wrong there during spaceflight.</p></div>
+      <div class="panel"><h2>Health record and alerts</h2><ul class="log" id="log"></ul></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:16px">
+    <h2>12-Day Longitudinal Trends & Reference Bands</h2>
+    <p class="mut">Historical biometric trends plotted against standard spaceflight reference bounds.</p>
+    <div class="charts" id="charts" style="margin-top:12px"></div>
+  </div>
+</section>
+
+<!-- 2. DAILY CLINICAL PROTOCOL (Check-in, Measurements, Routines) -->
+<section id="t-daily" class="sec">
+  <div class="two">
+    <div class="panel">
+      <h2>Today’s Routine Checklist</h2>
+      <div id="tasks"></div>
+    </div>
+    <div class="panel">
+      <h2>Clinical Measurement Guidelines</h2>
+      <details><summary>Blood pressure</summary><p class="mut">Sit still for 5 minutes. Cuff at heart level on the upper arm. Stay quiet, take two readings a minute apart and enter the second.</p></details>
+      <details><summary>Heart rate and SpO₂</summary><p class="mut">Clip the oximeter on a warm fingertip. Hold your hand still and wait 30 seconds until the number stops changing.</p></details>
+      <details><summary>Blood sugar</summary><p class="mut">Wash hands, use a fresh lancet on the side of a fingertip, apply the drop to the strip. Note if you measured fasting.</p></details>
+      <details><summary>Temperature</summary><p class="mut">Use the ear or forehead thermometer, away from vents and after at least 15 minutes without exercise.</p></details>
+      <details><summary>Exercise plan</summary><p class="mut">Aim for about 2 hours a day, 6 days a week: resistive training (bones and muscle), treadmill (heart and legs), cycle ergometer (cardio). Add core and back work to protect the spine.</p></details>
+      <p class="mut">General guidance for this prototype. Follow your flight surgeon’s protocol.</p>
+    </div>
+  </div>
+
+  <div class="two" style="margin-top:16px">
+    <div class="panel">
+      <h2>Record Daily Measurements</h2>
+      <p class="mut">Type values from the cuff, pulse oximeter, glucometer and thermometer.</p>
+      <div class="two">
+        <div><label for="hr">Heart rate (bpm)</label><input type="number" id="hr" value="70"></div>
+        <div><label for="spo2">Blood oxygen SpO₂ (%)</label><input type="number" id="spo2" value="97"></div>
+        <div><label for="sys">Blood pressure, systolic (mmHg)</label><input type="number" id="sys" value="118"></div>
+        <div><label for="dia">Blood pressure, diastolic (mmHg)</label><input type="number" id="dia" value="76"></div>
+        <div><label for="glu">Blood sugar (mg/dL)</label><input type="number" id="glu" value="92"></div>
+        <div><label for="temp">Body temperature (°C)</label><input type="number" id="temp" step="0.1" value="36.8"></div>
+      </div>
+      <p><button class="pri" id="subV">Save measurements</button></p>
+      <ul class="log" id="resV"></ul>
+    </div>
+    <div class="panel">
+      <h2>Standard Ranges: <span id="refE"></span></h2>
+      <div id="ref"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:16px;max-width:720px">
+    <h2>Daily Subjective Check-In</h2>
+    <p class="mut">Answer for the last 24 hours. Evaluates circadian, nutritional, and psychological wellness.</p>
+    <label>Mood: <b id="oMood">3</b> / 5 (1 very low, 5 great)</label><input type="range" id="mood" min="1" max="5" value="3">
+    <label>Anxiety or stress: <b id="oAnx">2</b> / 5</label><input type="range" id="anx" min="1" max="5" value="2">
+    <div class="two" style="margin-top:8px">
+      <div><label for="sleep">Sleep last night (hours)</label><input type="number" id="sleep" step="0.5" min="0" max="14" value="7"></div>
+      <div><label for="water">Water drunk (litres)</label><input type="number" id="water" step="0.25" min="0" max="8" value="2.5"></div>
+      <div><label for="meals">Meals eaten</label><input type="number" id="meals" min="0" max="6" value="3"></div>
+      <div><label for="ex">Exercise (minutes)</label><input type="number" id="ex" min="0" max="300" value="60"></div>
+    </div>
+    <label style="margin-top:12px">Behavioral observations (check any that apply)</label>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px;margin:8px 0">
+      <label style="color:inherit;font-weight:normal;text-transform:none"><input type="checkbox" class="cb"> Feeling isolated or withdrawn</label>
+      <label style="color:inherit;font-weight:normal;text-transform:none"><input type="checkbox" class="cb"> Irritable with crew</label>
+      <label style="color:inherit;font-weight:normal;text-transform:none"><input type="checkbox" class="cb"> Trouble concentrating</label>
+      <label style="color:inherit;font-weight:normal;text-transform:none"><input type="checkbox" class="cb"> Low appetite</label>
+    </div>
+    <p><button class="pri" id="subC">Save check-in</button></p>
+    <ul class="log" id="resC"></ul>
+  </div>
+</section>
+
+<!-- 3. CLINICAL TRIAGE -->
+<section id="t-sym" class="sec">
+  <div class="two">
+    <div class="panel"><h2>Report a Problem</h2>
+      <label for="sBody">Body part (optional)</label><select id="sBody"><option value="">Not sure</option><option value="brain">Head / brain</option><option value="heart">Heart</option><option value="lungs">Lungs</option><option value="abdomen">Abdomen</option><option value="arms">Arms</option><option value="hands">Hands</option><option value="legs">Legs</option></select>
+      <label for="sTxt">Describe what you feel</label><textarea id="sTxt" rows="4" placeholder="e.g. dull headache for two days and blurry vision"></textarea>
+      <label>Severity: <b id="oSev">3</b> / 5</label><input type="range" id="sev" min="1" max="5" value="3">
+      <label for="sImg">Photo (optional)</label><input type="file" id="sImg" accept="image/*"><img id="pv" class="pv" alt="" hidden>
+      <p><button class="pri" id="subS">Analyze</button></p>
+    </div>
+    <div class="panel" id="res"></div>
+  </div>
+</section>
+
+<!-- 4. COGNITIVE & MOTOR READINESS TESTS -->
+<section id="t-tests" class="sec">
+  <div class="two">
+    <div class="panel">
+      <h2>Motor Skills — Asteroid Intercept</h2>
+      <p class="mut">Controls: HOTAS / gamepad (left stick = aim, RT/R2 = fire) or keyboard (arrow keys + Space). Destroy as many asteroids as you can in 60 seconds. Tests fine motor coordination and reaction speed.</p>
+      <div id="astStatus" style="margin:8px 0;font-size:.85rem"></div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button class="pri" id="astStart">Start test</button>
+        <button id="astReset" style="display:none">Reset</button>
+      </div>
+      <canvas id="astCanvas" width="640" height="400" style="width:100%;max-width:640px;border:1px solid var(--line);border-radius:6px;background:#000;display:block"></canvas>
+    </div>
+    <div class="panel">
+      <h2>Motor Test Log</h2>
+      <ul class="log" id="astLog"><li class="mut">No sessions yet.</li></ul>
+    </div>
+  </div>
+
+  <div class="two" style="margin-top:16px">
+    <div class="panel">
+      <h2>Memory Test — Pattern Recall</h2>
+      <p class="mut">Flip two cards at a time to find matching fruit pairs. Complete all 8 pairs as fast as possible with minimal errors to assess cognitive working memory.</p>
+      <div id="memStatus" style="margin:8px 0;font-size:.85rem"></div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="pri" id="memStart">Start test</button>
+      </div>
+      <div id="memGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:420px"></div>
+    </div>
+    <div class="panel">
+      <h2>Memory Test Log</h2>
+      <ul class="log" id="memLog"><li class="mut">No sessions yet.</li></ul>
+    </div>
+  </div>
+</section>
+
+<!-- 5. VR EARTH SANCTUARY -->
+<section id="t-vr" class="sec"><div class="two"><div class="panel"><h2>Earth Sanctuary — VR Mental Health Biome</h2><p class="mut">Grounding sensory immersion to counter confinement stress, sensory deprivation, and autonomic imbalance during spaceflight missions.</p>
+<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0 14px">
+  <label for="vrEnvSel" style="margin:0">Biome</label>
+  <select id="vrEnvSel" style="width:auto;flex:1;min-width:180px">
+    <option value="forest">Pine Forest & Mountain Trail</option>
+    <option value="lake">Alpine Lake at Sunrise</option>
+    <option value="ocean">Pacific Ocean Coastline</option>
+    <option value="meadow">Autumn Highland Meadow</option>
+  </select>
+  <button id="vrFsBtn">Fullscreen</button>
+  <button id="vrAudioBtn">Audio: Off</button>
+</div>
+<div style="position:relative;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--line);background:#02060d">
+  <canvas id="vrCanvas" width="700" height="420" style="width:100%;max-width:700px;display:block;cursor:grab"></canvas>
+  <div id="vrPacer" style="position:absolute;bottom:16px;right:16px;background:rgba(10,20,35,0.8);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:10px;padding:8px 14px;display:flex;align-items:center;gap:12px;color:#fff">
+    <div id="vrBreathRing" style="width:32px;height:32px;border-radius:50%;border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;transition:transform 4s ease-in-out">
+      <div style="width:10px;height:10px;border-radius:50%;background:var(--acc)"></div>
+    </div>
+    <div>
+      <div id="vrBreathText" style="font-size:0.75rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase">Inhale...</div>
+      <div style="font-size:0.68rem;color:var(--mut)">0.1 Hz Coherence Pacing</div>
+    </div>
+  </div>
+  <div style="position:absolute;top:14px;left:14px;background:rgba(10,20,35,0.7);backdrop-filter:blur(6px);padding:4px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);font-size:0.72rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--acc)">
+    Click & Drag to Look Around (360°)
+  </div>
+</div>
+<div style="margin-top:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+  <div>
+    <label style="margin:0 0 4px">Pre-session stress</label>
+    <select id="vrPreStress" style="width:auto">
+      <option value="5">5 (Severe)</option>
+      <option value="4" selected>4 (Elevated)</option>
+      <option value="3">3 (Moderate)</option>
+      <option value="2">2 (Mild)</option>
+      <option value="1">1 (Calm)</option>
+    </select>
+  </div>
+  <div>
+    <label style="margin:0 0 4px">Post-session stress</label>
+    <select id="vrPostStress" style="width:auto">
+      <option value="5">5 (Severe)</option>
+      <option value="4">4 (Elevated)</option>
+      <option value="3">3 (Moderate)</option>
+      <option value="2" selected>2 (Mild)</option>
+      <option value="1">1 (Calm)</option>
+    </select>
+  </div>
+  <div style="flex:1"></div>
+  <button class="pri" id="vrLogBtn" style="margin-top:16px">Log Decompression Session</button>
+</div>
+<div id="vrStatus" style="margin-top:8px;font-size:0.85rem"></div>
+</div>
+<div class="panel"><h2>Decompression History</h2><p class="mut">Log of Earth Sanctuary sessions. NASA flight medicine recommends immersive sensory grounding every 48 hours during deep space transit to preserve cognitive flexibility and circadian stability.</p><ul class="log" id="vrLog"><li class="mut">No decompression sessions logged yet.</li></ul></div></div></section>
+
+<!-- 6. NASA RISK WATCH -->
 <section id="t-hz" class="sec"><div class="panel"><h2>Your risk watch</h2><p class="mut">NASA’s Human Research Program tracks these spaceflight risks. Colors come from your latest readings and last three check-ins. Grey means this console can’t measure the risk, so report symptoms instead.</p><div id="rw"></div></div><h2 style="margin:18px 0 8px">The five hazards of spaceflight</h2><div class="charts" id="hz"></div><p class="mut">Source: <a href="https://www.nasa.gov/hrp/hazards/" target="_blank" rel="noopener">NASA hazards</a> and <a href="https://www.nasa.gov/hrp/risks/" target="_blank" rel="noopener">NASA risks</a>.</p></section>
-<section id="t-ast" class="sec"><div class="two"><div class="panel"><h2>Motor Skills — Asteroid Intercept</h2><p class="mut">Controls: HOTAS / gamepad (left stick = aim, RT/R2 = fire) or keyboard (arrow keys + Space). Destroy as many asteroids as you can in 60 seconds. Results are logged to your health record.</p><div id="astStatus" style="margin:8px 0;font-size:.85rem"></div><div style="display:flex;gap:8px;margin-bottom:10px"><button class="pri" id="astStart">Start test</button><button id="astReset" style="display:none">Reset</button></div><canvas id="astCanvas" width="640" height="400" style="width:100%;max-width:640px;border:1px solid var(--border);border-radius:6px;background:#000;display:block"></canvas></div><div class="panel"><h2>Motor test log</h2><ul class="log" id="astLog"><li class="mut">No sessions yet.</li></ul></div></div></section>
-<section id="t-mem" class="sec"><div class="two"><div class="panel"><h2>Memory Test — Pattern Recall</h2><p class="mut">Flip two cards at a time to find matching pairs. Complete all 8 pairs as fast as possible with as few errors as possible. Results are logged to your health record.</p><div id="memStatus" style="margin:8px 0;font-size:.85rem"></div><div style="display:flex;gap:8px;margin-bottom:12px"><button class="pri" id="memStart">Start test</button></div><div id="memGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:420px"></div></div><div class="panel"><h2>Memory test log</h2><ul class="log" id="memLog"><li class="mut">No sessions yet.</li></ul></div></div></section>
+
+<!-- 7. SHIP & SUIT SENSORS -->
+<section id="t-en" class="sec"><div class="panel"><h2>Ship and suit sensors <span class="pill"><i></i>Live</span></h2><p class="mut">Simulated feeds from sensors across the vehicle and on your suit, updated every 3 seconds. Alerts for the place you are in flag your lungs on the body map. A dangerous reading anywhere notifies the crew team.</p><label for="enLoc">You are in</label><select id="enLoc"></select><p class="mut" style="margin-top:12px">Try a test event:</p><div id="enEv" style="display:flex;gap:8px;flex-wrap:wrap"></div></div><div class="charts" id="enZ" style="margin-top:14px"></div></section>
 </main></div>
 
 <script>
@@ -293,7 +1186,8 @@ $('#rw').innerHTML=R.map(r=>`<div class="row"><span><span class="dot ${r[2]}"></
 const hi=HI[Object.keys(HI).find(k=>S.profile.env.includes(k))]||[];
 $('#hz').innerHTML=HZ.map(h=>`<div class="panel"><h3>${h[1]}${hi.includes(h[0])?'<span class="hi">Higher at your location</span>':''}</h3><p class="mut">${h[2]}</p></div>`).join('')}
 function render(){applyEnv();$('#cName').textContent=S.profile.name;$('#cBlood').textContent='Blood '+S.profile.blood+' · '+S.profile.sex;$('#cEnv').textContent=S.profile.env;renderFig();renderTiles();renderLog();renderCharts();renderTasks();renderRisk();applyMode();renderSleep();renderEnv();if(sel)renderPart()}
-function tab(t){$$('.sec').forEach(s=>s.classList.toggle('on',s.id==='t-'+t));$$('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));window.scrollTo(0,0)}
+const TAB_MAP={dash:'dash',tr:'dash',daily:'daily',check:'daily',vit:'daily',rt:'daily',sym:'sym',tests:'tests',ast:'tests',mem:'tests',vr:'vr',hz:'hz',en:'en'};
+function tab(t){const target=TAB_MAP[t]||t;$$('.sec').forEach(s=>s.classList.toggle('on',s.id==='t-'+target));$$('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===target));if(t==='vit'&&$('#subV')){$('#subV').scrollIntoView({behavior:'smooth'})}else if(t==='check'&&$('#subC')){$('#subC').scrollIntoView({behavior:'smooth'})}else{window.scrollTo(0,0)}}
 
 function flag(level,msg,part,out){addLog(level,msg,part);out.push(`<li><span class="dot ${level}"></span>${msg}</li>`);if(level==='crit')notify(msg)}
 $('#subV').onclick=()=>{const v={d:day(0)},o=[];Object.keys(LBL).forEach(k=>v[k]=parseFloat($('#'+k).value));if(Object.keys(LBL).some(k=>isNaN(v[k]))){$('#resV').innerHTML='<li>Please fill in every measurement.</li>';return}S.V.push(v);
@@ -344,14 +1238,15 @@ setInterval(tickEnv,3000);
 $('#emgX').onclick=()=>$('#emg').classList.remove('on');
 function enter(){$('#login').hidden=true;$('#app').hidden=false;render()}
 $('#go').onclick=()=>{const n=$('#lName').value.trim();if(!n){$('#lName').focus();return}
-S=seed();S.profile={name:n,blood:$('#lBlood').value,sex:$('#lSex').value,gene:$('#lGene').value,env:$('#lEnv').value};save();enter()};
+const sVal=$('#lSanctuary')?$('#lSanctuary').value:'forest';
+S=seed();S.profile={name:n,blood:$('#lBlood').value,sex:$('#lSex').value,gene:$('#lGene').value,env:$('#lEnv').value,sanctuary:sVal};save();enter()};
 $('#out').onclick=()=>{document.documentElement.dataset.mode='';S=null;mem=null;try{localStorage.removeItem('chc')}catch(e){}sel=null;$('#app').hidden=true;$('#login').hidden=false};
 setInterval(()=>{const e=$('#clkT');if(e)e.textContent='UTC '+new Date().toISOString().slice(11,19);if(S)tickSleep()},1000);
 const isDark=()=>{const t=document.documentElement.dataset.theme;return t?t==='dark':matchMedia('(prefers-color-scheme:dark)').matches};
-function theme(t){if(t){document.documentElement.dataset.theme=t;try{localStorage.setItem('chc-theme',t)}catch(e){}}const d=isDark();$$('.thm').forEach(b=>{b.textContent=d?'☀ Light mode':'☾ Dark mode';b.setAttribute('aria-label',d?'Switch to light mode':'Switch to dark mode')})}
+function theme(t){if(t){document.documentElement.dataset.theme=t;try{localStorage.setItem('chc-theme',t)}catch(e){}}const d=isDark();$$('.thm').forEach(b=>{b.textContent=d?'Light mode':'Dark mode';b.setAttribute('aria-label',d?'Switch to light mode':'Switch to dark mode')})}
 $$('.thm').forEach(b=>b.onclick=()=>theme(isDark()?'light':'dark'));
 {let t=null;try{t=localStorage.getItem('chc-theme')}catch(e){}if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;theme()}
-S=load();if(S&&S.profile)enter();else S=null;
+S=load();if(S&&S.profile){if(!S.profile.sanctuary)S.profile.sanctuary='forest';enter();}else S=null;
 
 // ── ASTEROID MOTOR TEST ──────────────────────────────────────────────────────
 (function(){
@@ -528,8 +1423,8 @@ S=load();if(S&&S.profile)enter();else S=null;
 
 // ── MEMORY TEST ─────────────────────────────────────────────────────────────
 (function(){
-  const SYMBOLS=['RKT','SAT','PLN','STR','MRS','JUP','MNR','CMT'];
-  const COLORS= ['#4a9eff','#f59e0b','#60efff','#a78bfa','#f87171','#34d399','#fb923c','#e879f9'];
+  const SYMBOLS=['🍎','🍌','🍇','🍊','🍓','🍉','🍒','🍋'];
+  const COLORS= ['rgba(239,68,68,0.25)','rgba(245,158,11,0.25)','rgba(168,85,247,0.25)','rgba(249,115,22,0.25)','rgba(236,72,153,0.25)','rgba(34,197,94,0.25)','rgba(220,38,38,0.25)','rgba(234,179,8,0.25)'];
   let deck=[],flipped=[],matched=new Set(),errors=0,memActive=false,startTime=null,lockBoard=false;
 
   function buildGrid(){
@@ -543,7 +1438,7 @@ S=load();if(S&&S.profile)enter();else S=null;
       const col=COLORS[SYMBOLS.indexOf(sym)];
       const card=document.createElement('div');
       card.dataset.i=i;card.dataset.sym=sym;
-      card.style.cssText=`aspect-ratio:1;border-radius:8px;cursor:pointer;border:2px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;letter-spacing:.05em;user-select:none;transition:background .15s,color .15s;`;
+      card.style.cssText=`aspect-ratio:1;border-radius:10px;cursor:pointer;border:1px solid var(--line);background:var(--sil);display:flex;align-items:center;justify-content:center;font-size:1.6rem;user-select:none;transition:transform .15s ease,background .2s ease;`;
       card.textContent='?';
       card.addEventListener('click',()=>cardClick(card,sym,i,col));
       grid.appendChild(card);
@@ -554,7 +1449,7 @@ S=load();if(S&&S.profile)enter();else S=null;
   function cardClick(card,sym,i,col){
     if(!memActive||lockBoard||matched.has(i)||flipped.some(f=>f.i===i))return;
     if(!startTime)startTime=performance.now();
-    card.style.background=col;card.style.color='#000';card.textContent=sym;
+    card.style.background=col;card.style.borderColor='var(--line-strong)';card.textContent=sym;
     flipped.push({card,sym,i});
     if(flipped.length===2){
       lockBoard=true;
@@ -566,8 +1461,8 @@ S=load();if(S&&S.profile)enter();else S=null;
       } else {
         errors++;
         setTimeout(()=>{
-          a.card.style.background='var(--surface)';a.card.style.color='';a.card.textContent='?';
-          b.card.style.background='var(--surface)';b.card.style.color='';b.card.textContent='?';
+          a.card.style.background='var(--sil)';a.card.style.borderColor='var(--line)';a.card.textContent='?';
+          b.card.style.background='var(--sil)';b.card.style.borderColor='var(--line)';b.card.textContent='?';
           flipped=[];lockBoard=false;
         },900);
       }
@@ -596,5 +1491,500 @@ S=load();if(S&&S.profile)enter();else S=null;
     }
   });
   setTimeout(buildGrid,600);
+})();
+
+// ── VR EARTH SANCTUARY ────────────────────────────────────────────────────────
+(function(){
+  const canvas = $('#vrCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  
+  let currentBiome = 'forest';
+  let yaw = 0;
+  let pitch = 0;
+  let isDragging = false;
+  let lastX = 0, lastY = 0;
+  let animId = null;
+  let particles = [];
+  
+  // Audio synthesis state
+  let audioCtx = null;
+  let noiseNode = null;
+  let gainNode = null;
+  let filterNode = null;
+  let audioActive = false;
+  let lfoInterval = null;
+
+  for(let i=0; i<45; i++){
+    particles.push({
+      x: Math.random() * 700,
+      y: Math.random() * 420,
+      vx: (Math.random() - 0.5) * 0.8,
+      vy: Math.random() * 0.6 + 0.2,
+      r: Math.random() * 3 + 1,
+      alpha: Math.random() * 0.6 + 0.2
+    });
+  }
+
+  canvas.addEventListener('mousedown', e => {
+    isDragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    canvas.style.cursor = 'grabbing';
+  });
+  window.addEventListener('mouseup', () => {
+    isDragging = false;
+    if(canvas) canvas.style.cursor = 'grab';
+  });
+  window.addEventListener('mousemove', e => {
+    if(!isDragging) return;
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    yaw = (yaw - dx * 0.005 + Math.PI * 2) % (Math.PI * 2);
+    pitch = Math.max(-0.35, Math.min(0.35, pitch + dy * 0.004));
+  });
+
+  canvas.addEventListener('touchstart', e => {
+    if(e.touches.length === 1){
+      isDragging = true;
+      lastX = e.touches[0].clientX;
+      lastY = e.touches[0].clientY;
+    }
+  }, {passive: true});
+  window.addEventListener('touchend', () => { isDragging = false; });
+  window.addEventListener('touchmove', e => {
+    if(!isDragging || e.touches.length !== 1) return;
+    const dx = e.touches[0].clientX - lastX;
+    const dy = e.touches[0].clientY - lastY;
+    lastX = e.touches[0].clientX;
+    lastY = e.touches[0].clientY;
+    yaw = (yaw - dx * 0.006 + Math.PI * 2) % (Math.PI * 2);
+    pitch = Math.max(-0.35, Math.min(0.35, pitch + dy * 0.005));
+  }, {passive: true});
+
+  const fsBtn = $('#vrFsBtn');
+  if(fsBtn){
+    fsBtn.addEventListener('click', () => {
+      if(!document.fullscreenElement){
+        canvas.requestFullscreen?.().catch(()=>{});
+      } else {
+        document.exitFullscreen?.().catch(()=>{});
+      }
+    });
+  }
+
+  function initAudio(){
+    if(!audioCtx){
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AudioContext();
+    }
+  }
+
+  function startBiomeAudio(){
+    initAudio();
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    stopBiomeAudio();
+
+    const bufferSize = audioCtx.sampleRate * 2;
+    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    let b0 = 0, b1 = 0, b2 = 0;
+    for(let i = 0; i < bufferSize; i++){
+      const white = Math.random() * 2 - 1;
+      b0 = 0.99886 * b0 + white * 0.0555179;
+      b1 = 0.99332 * b1 + white * 0.0750759;
+      b2 = 0.96900 * b2 + white * 0.1538520;
+      output[i] = (b0 + b1 + b2) * 0.08;
+    }
+
+    noiseNode = audioCtx.createBufferSource();
+    noiseNode.buffer = noiseBuffer;
+    noiseNode.loop = true;
+
+    filterNode = audioCtx.createBiquadFilter();
+    gainNode = audioCtx.createGain();
+
+    if(currentBiome === 'ocean'){
+      filterNode.type = 'lowpass';
+      filterNode.frequency.setValueAtTime(450, audioCtx.currentTime);
+      gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      let swell = 0;
+      lfoInterval = setInterval(() => {
+        swell = (swell + 0.04) % (Math.PI * 2);
+        const waveGain = 0.05 + 0.18 * (0.5 + 0.5 * Math.sin(swell));
+        if(gainNode && audioCtx) gainNode.gain.setTargetAtTime(waveGain, audioCtx.currentTime, 0.4);
+      }, 100);
+    } else if(currentBiome === 'forest'){
+      filterNode.type = 'bandpass';
+      filterNode.frequency.setValueAtTime(800, audioCtx.currentTime);
+      filterNode.Q.setValueAtTime(1.2, audioCtx.currentTime);
+      gainNode.gain.setValueAtTime(0.06, audioCtx.currentTime);
+      let breeze = 0;
+      lfoInterval = setInterval(() => {
+        breeze = (breeze + 0.03) % (Math.PI * 2);
+        const bGain = 0.03 + 0.06 * (0.5 + 0.5 * Math.sin(breeze));
+        if(gainNode && audioCtx) gainNode.gain.setTargetAtTime(bGain, audioCtx.currentTime, 0.6);
+      }, 150);
+    } else if(currentBiome === 'lake'){
+      filterNode.type = 'lowpass';
+      filterNode.frequency.setValueAtTime(600, audioCtx.currentTime);
+      gainNode.gain.setValueAtTime(0.04, audioCtx.currentTime);
+    } else {
+      filterNode.type = 'lowpass';
+      filterNode.frequency.setValueAtTime(750, audioCtx.currentTime);
+      gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+    }
+
+    noiseNode.connect(filterNode);
+    filterNode.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    noiseNode.start();
+    audioActive = true;
+    updateAudioBtn();
+  }
+
+  function stopBiomeAudio(){
+    if(lfoInterval) clearInterval(lfoInterval);
+    lfoInterval = null;
+    if(noiseNode){
+      try{ noiseNode.stop(); noiseNode.disconnect(); }catch(e){}
+      noiseNode = null;
+    }
+    audioActive = false;
+    updateAudioBtn();
+  }
+
+  function updateAudioBtn(){
+    const btn = $('#vrAudioBtn');
+    if(!btn) return;
+    btn.textContent = audioActive ? 'Audio: Active' : 'Audio: Off';
+    btn.style.color = audioActive ? 'var(--ok)' : '';
+  }
+
+  const audioBtn = $('#vrAudioBtn');
+  if(audioBtn){
+    audioBtn.addEventListener('click', () => {
+      if(!audioActive) startBiomeAudio();
+      else stopBiomeAudio();
+    });
+  }
+
+  const envSel = $('#vrEnvSel');
+  if(envSel){
+    envSel.addEventListener('change', e => {
+      currentBiome = e.target.value;
+      if(S && S.profile){
+        S.profile.sanctuary = currentBiome;
+        save();
+      }
+      if(audioActive) startBiomeAudio();
+    });
+  }
+
+  let breathPhase = 0;
+  setInterval(() => {
+    breathPhase = (breathPhase + 1) % 4;
+    const ring = $('#vrBreathRing');
+    const text = $('#vrBreathText');
+    if(!ring || !text) return;
+    if(breathPhase === 0){
+      text.textContent = 'Inhale...';
+      ring.style.transform = 'scale(1.4)';
+      ring.style.borderColor = 'var(--acc)';
+    } else if(breathPhase === 1){
+      text.textContent = 'Hold...';
+      ring.style.transform = 'scale(1.4)';
+      ring.style.borderColor = 'var(--yel)';
+    } else if(breathPhase === 2){
+      text.textContent = 'Exhale...';
+      ring.style.transform = 'scale(1)';
+      ring.style.borderColor = 'var(--ok)';
+    } else {
+      text.textContent = 'Rest...';
+      ring.style.transform = 'scale(1)';
+      ring.style.borderColor = 'var(--line)';
+    }
+  }, 4000);
+
+  function renderScene(time){
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    const horizonY = h * 0.52 + pitch * h * 0.8;
+    const panOffset = (yaw / (Math.PI * 2)) * w;
+
+    if(currentBiome === 'forest'){
+      const sky = ctx.createLinearGradient(0, 0, 0, horizonY);
+      sky.addColorStop(0, '#102a43');
+      sky.addColorStop(0.6, '#243b53');
+      sky.addColorStop(1, '#829ab1');
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, w, horizonY);
+
+      ctx.fillStyle = '#1c3144';
+      ctx.beginPath();
+      ctx.moveTo(0, horizonY);
+      for(let x = 0; x <= w; x += 15){
+        const worldX = (x + panOffset * 0.3) * 0.015;
+        const my = horizonY - 45 - Math.sin(worldX) * 25 - Math.cos(worldX * 2.3) * 15;
+        ctx.lineTo(x, my);
+      }
+      ctx.lineTo(w, horizonY);
+      ctx.closePath();
+      ctx.fill();
+
+      const ground = ctx.createLinearGradient(0, horizonY, 0, h);
+      ground.addColorStop(0, '#1b382b');
+      ground.addColorStop(1, '#0c1a14');
+      ctx.fillStyle = ground;
+      ctx.fillRect(0, horizonY, w, h - horizonY);
+
+      for(let i = -1; i <= 6; i++){
+        const baseWorldX = i * 160;
+        const screenX = ((baseWorldX - panOffset * 0.8) % (w + 200) + (w + 200)) % (w + 200) - 100;
+        const treeH = 180 + Math.sin(i * 3.7) * 40;
+        const treeY = horizonY + 20 + Math.cos(i) * 15;
+
+        ctx.fillStyle = '#2d1810';
+        ctx.fillRect(screenX - 5, treeY - treeH * 0.3, 10, treeH * 0.3);
+
+        ctx.fillStyle = i % 2 === 0 ? '#1f4e38' : '#143d2b';
+        for(let c = 0; c < 3; c++){
+          const tierY = treeY - treeH * (0.3 + c * 0.25);
+          const tierW = 45 - c * 8;
+          ctx.beginPath();
+          ctx.moveTo(screenX, tierY - 35);
+          ctx.lineTo(screenX - tierW, tierY);
+          ctx.lineTo(screenX + tierW, tierY);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+
+      ctx.save();
+      ctx.fillStyle = 'rgba(255, 235, 180, 0.06)';
+      ctx.beginPath();
+      const sunX = ((w * 0.4 - panOffset * 0.5) % w + w) % w;
+      ctx.moveTo(sunX, 0);
+      ctx.lineTo(sunX - 120, h);
+      ctx.lineTo(sunX + 60, h);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+    } else if(currentBiome === 'lake'){
+      const sky = ctx.createLinearGradient(0, 0, 0, horizonY);
+      sky.addColorStop(0, '#2e1c3b');
+      sky.addColorStop(0.5, '#7b3558');
+      sky.addColorStop(0.85, '#d97d64');
+      sky.addColorStop(1, '#f9c58d');
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, w, horizonY);
+
+      const sunX = ((w * 0.5 - panOffset * 0.2) % w + w) % w;
+      ctx.fillStyle = '#fff4e0';
+      ctx.beginPath();
+      ctx.arc(sunX, horizonY - 15, 24, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#221226';
+      ctx.beginPath();
+      ctx.moveTo(0, horizonY);
+      for(let x = 0; x <= w; x += 10){
+        const worldX = (x + panOffset * 0.4) * 0.012;
+        const my = horizonY - 60 - Math.abs(Math.sin(worldX * 1.8) * 55) - Math.cos(worldX * 3.1) * 20;
+        ctx.lineTo(x, my);
+      }
+      ctx.lineTo(w, horizonY);
+      ctx.closePath();
+      ctx.fill();
+
+      const water = ctx.createLinearGradient(0, horizonY, 0, h);
+      water.addColorStop(0, '#4a2538');
+      water.addColorStop(0.4, '#1c2838');
+      water.addColorStop(1, '#0e1722');
+      ctx.fillStyle = water;
+      ctx.fillRect(0, horizonY, w, h - horizonY);
+
+      ctx.fillStyle = 'rgba(255, 220, 160, 0.25)';
+      for(let r = 0; r < 20; r++){
+        const ry = horizonY + 10 + r * 14;
+        const rw = (r + 1) * 8 + Math.sin(time * 0.003 + r) * 12;
+        ctx.fillRect(sunX - rw * 0.5, ry, rw, 2);
+      }
+
+    } else if(currentBiome === 'ocean'){
+      const sky = ctx.createLinearGradient(0, 0, 0, horizonY);
+      sky.addColorStop(0, '#0c2340');
+      sky.addColorStop(0.7, '#205493');
+      sky.addColorStop(1, '#fdb813');
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, w, horizonY);
+
+      const sea = ctx.createLinearGradient(0, horizonY, 0, h);
+      sea.addColorStop(0, '#0f3a52');
+      sea.addColorStop(0.5, '#082536');
+      sea.addColorStop(1, '#1a3028');
+      ctx.fillStyle = sea;
+      ctx.fillRect(0, horizonY, w, h - horizonY);
+
+      for(let s = 1; s <= 4; s++){
+        const waveProg = ((time * 0.0006 + s * 0.25) % 1);
+        const waveY = horizonY + waveProg * (h - horizonY);
+        ctx.strokeStyle = `rgba(255, 255, 255, ${0.4 * (1 - waveProg)})`;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        for(let x = 0; x <= w; x += 20){
+          const waveCurv = Math.sin((x + panOffset) * 0.02 + time * 0.002) * 5;
+          if(x === 0) ctx.moveTo(x, waveY + waveCurv);
+          else ctx.lineTo(x, waveY + waveCurv);
+        }
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#423722';
+      ctx.beginPath();
+      ctx.moveTo(0, h);
+      ctx.lineTo(w, h);
+      ctx.lineTo(w, h - 35);
+      ctx.lineTo(0, h - 55);
+      ctx.closePath();
+      ctx.fill();
+
+    } else {
+      const sky = ctx.createLinearGradient(0, 0, 0, horizonY);
+      sky.addColorStop(0, '#1d3557');
+      sky.addColorStop(0.7, '#457b9d');
+      sky.addColorStop(1, '#a8dadc');
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, w, horizonY);
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+      for(let c = 0; c < 4; c++){
+        const cx = ((c * 200 - panOffset * 0.2) % (w + 160) + (w + 160)) % (w + 160) - 80;
+        ctx.beginPath();
+        ctx.arc(cx, horizonY - 70, 30, 0, Math.PI * 2);
+        ctx.arc(cx + 35, horizonY - 75, 40, 0, Math.PI * 2);
+        ctx.arc(cx + 70, horizonY - 70, 30, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = '#b68d40';
+      ctx.beginPath();
+      ctx.moveTo(0, horizonY);
+      for(let x = 0; x <= w; x += 15){
+        const worldX = (x + panOffset * 0.5) * 0.008;
+        const my = horizonY - 25 - Math.sin(worldX) * 20;
+        ctx.lineTo(x, my);
+      }
+      ctx.lineTo(w, horizonY);
+      ctx.closePath();
+      ctx.fill();
+
+      const field = ctx.createLinearGradient(0, horizonY, 0, h);
+      field.addColorStop(0, '#9a6b2f');
+      field.addColorStop(1, '#442d13');
+      ctx.fillStyle = field;
+      ctx.fillRect(0, horizonY, w, h - horizonY);
+
+      ctx.strokeStyle = '#d4a373';
+      ctx.lineWidth = 1.5;
+      for(let g = 0; g < w; g += 18){
+        const sway = Math.sin(time * 0.003 + g) * 8;
+        ctx.beginPath();
+        ctx.moveTo(g, h);
+        ctx.quadraticCurveTo(g + sway * 0.5, h - 25, g + sway, h - 45);
+        ctx.stroke();
+      }
+    }
+
+    particles.forEach(p => {
+      p.x += p.vx + Math.sin(time * 0.001) * 0.3;
+      p.y += p.vy;
+      if(p.x < 0) p.x = w;
+      if(p.x > w) p.x = 0;
+      if(p.y > h) p.y = 0;
+
+      ctx.fillStyle = currentBiome === 'forest' ? `rgba(255, 230, 160, ${p.alpha})` :
+                      currentBiome === 'ocean' ? `rgba(200, 240, 255, ${p.alpha})` :
+                      `rgba(255, 245, 220, ${p.alpha})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    animId = requestAnimationFrame(renderScene);
+  }
+
+  const logBtn = $('#vrLogBtn');
+  if(logBtn){
+    logBtn.addEventListener('click', () => {
+      const pre = +($('#vrPreStress')?.value || 3);
+      const post = +($('#vrPostStress')?.value || 2);
+      const delta = pre - post;
+      const biomeNames = {
+        forest: 'Pine Forest & Mountain Trail',
+        lake: 'Alpine Lake at Sunrise',
+        ocean: 'Pacific Ocean Coastline',
+        meadow: 'Autumn Highland Meadow'
+      };
+      const name = biomeNames[currentBiome] || currentBiome;
+      const durationMin = 15;
+      const summary = `${name} | Stress: ${pre} -> ${post} (${delta >= 0 ? '-' + delta : '+' + (-delta)}) | ${durationMin}m session`;
+
+      if(S){
+        S.vrSessions = S.vrSessions || [];
+        S.vrSessions.unshift({
+          d: day(0),
+          biome: currentBiome,
+          pre,
+          post,
+          duration: durationMin,
+          ts: new Date().toISOString()
+        });
+        save();
+      }
+
+      const log = $('#vrLog');
+      if(log){
+        if(log.querySelector('.mut')) log.innerHTML = '';
+        const li = document.createElement('li');
+        li.innerHTML = `<b>${day(0)}</b> — ${summary}`;
+        log.prepend(li);
+      }
+
+      addLog('ok', `VR Sanctuary (${name}): Stress reduced from ${pre} to ${post}`);
+      const st = $('#vrStatus');
+      if(st) st.textContent = 'Session complete and logged to medical flight record: ' + summary;
+    });
+  }
+
+  function syncSanctuary(){
+    if(S && S.profile && S.profile.sanctuary){
+      currentBiome = S.profile.sanctuary;
+      const el = $('#vrEnvSel');
+      if(el) el.value = currentBiome;
+    }
+    const log = $('#vrLog');
+    if(log && S && S.vrSessions && S.vrSessions.length){
+      log.innerHTML = S.vrSessions.map(s => {
+        const biomeNames = {
+          forest: 'Pine Forest & Mountain Trail',
+          lake: 'Alpine Lake at Sunrise',
+          ocean: 'Pacific Ocean Coastline',
+          meadow: 'Autumn Highland Meadow'
+        };
+        const name = biomeNames[s.biome] || s.biome;
+        const delta = s.pre - s.post;
+        return `<li><b>${s.d}</b> — ${name} | Stress: ${s.pre} -> ${s.post} (${delta >= 0 ? '-' + delta : '+' + (-delta)}) | ${s.duration}m</li>`;
+      }).join('');
+    }
+  }
+
+  animId = requestAnimationFrame(renderScene);
+  setTimeout(syncSanctuary, 500);
 })();
 </script></body></html>
