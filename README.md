@@ -54,13 +54,15 @@ The solution uses a clean separation between the mission interface and the clini
 ## Project Structure
 
 ```text
-├── Crew Health Console.html    # Interactive frontend console application
+├── Crew Health Console.html    # Interactive single-page mission operations dashboard
 ├── medgemma_server.py          # FastAPI backend server with MedGemma-4B-IT integration
 ├── requirements.txt            # Python dependencies
 ├── .env.example                # Safe environment variable template for HF_TOKEN
 ├── .gitignore                  # Prevents committing credentials, caches, and .env
 ├── README.md                   # Complete documentation and operational guide
-└── Login, so the system...pdf  # Full project specification document
+└── Images/                     # Visual assets and anatomical diagrams
+    ├── human_figure.png        # Anatomical vector mapping overlay
+    └── nasa_logo.png           # NASA emblem asset
 ```
 
 ---
@@ -114,3 +116,32 @@ Because `google/medgemma-4b-it` is a gated medical foundation model:
 ## Security and Secret Protection
 
 Never commit your `.env` file or personal Hugging Face access token to a public repository. The included `.gitignore` file strictly excludes `.env` and local model caches.
+
+---
+
+## Use of NASA Data & Spaceflight Evidence
+
+This project directly incorporates research, standards, and data guidelines from NASA:
+
+1. **NASA Human Research Program (HRP) Evidence Books**:
+   - Risk of Spaceflight-Associated Neuro-Ocular Syndrome (SANS) and intracranial pressure dynamics.
+   - Risk of Space Motion Sickness (SMS) and sensorimotor vestibular adaptation.
+   - Risk of Adverse Cognitive or Behavioral Conditions and Psychiatric Disorders (fatigue, sleep loss, circadian misalignment).
+   - Risk of Immune System Dysregulation and latent viral reactivation (EBV, VZV) in microgravity.
+   - Risk of Renal Stone Formation and microgravity cephalad fluid shifts.
+   - Risk of Cardiovascular Disease and arrhythmias during long-duration spaceflight.
+2. **NASA Spaceflight Human-System Standard (NASA-STD-3001)**:
+   - Volume 1: Crew Health – Baseline physiological thresholds, vital sign ranges, and medical emergency classifications.
+   - Volume 2: Human Factors, Habitation, and Environmental Quality – Cabin atmospheric bounds (O₂, CO₂, barometric pressure, particulate thresholds, and radiation dosage metrics).
+3. **NASA Operational Countermeasures**:
+   - Mandatory 2-hour daily resistive and aerobic exercise protocols (ARED, T2 Treadmill, CEVIS cycle ergometer) to counter musculoskeletal and bone density loss.
+
+---
+
+## References & Open Source Attribution
+
+- **Google MedGemma-4B-IT**: Instruction-tuned multimodal medical foundation model based on Gemma 3 architecture (`google/medgemma-4b-it`).
+- **FastAPI & Uvicorn**: High-performance asynchronous backend services for local clinical inference.
+- **Hugging Face Transformers & Accelerate**: Model execution pipeline and bfloat16 parameter loading.
+- **NASA Human Research Roadmap (HRR)**: Standardized clinical risk taxonomies for deep-space and exploration-class transit.
+- **NASA Open Science Data Repository (OSDR)**: Space biology multi-omics and physiological references.
